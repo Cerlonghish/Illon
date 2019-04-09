@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0f3b52"
     tools:context=".LoginActivity">
 
     <ImageView
@@ -18,23 +17,23 @@
         android:layout_width="300dp"
         android:layout_height="40dp"
         android:id="@+id/name"
-        android:drawableLeft="@drawable/user"
         android:background="@drawable/edit_round"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="150dp"
         android:hint="Enter username"
         />
+    <!-- MANCA IMMAGINE A FIANCO A "ENTER USERNAME" -> la dimensione vaa modificata da codice (guarda stackoverflow) -->
 
     <Button
         android:layout_width="200dp"
         android:layout_height="60dp"
-        android:background="@drawable/button_round"
         android:layout_centerHorizontal="true"
+        android:background="@drawable/button_round"
         android:layout_below="@id/name"
         android:text="Login"
         android:layout_marginTop="20dp"
         android:textAllCaps="false"
-
+        android:textSize="20dp"
         />
     <TextView
         android:layout_width="wrap_content"
