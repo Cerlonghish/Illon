@@ -20,7 +20,10 @@
         android:background="@drawable/edit_round"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="150dp"
-        android:hint="Enter username"
+        android:hint=" Enter username"
+        android:paddingLeft="10dp"
+        android:drawableLeft="@drawable/ic_person_black_24dp"
+
         />
     <!-- MANCA IMMAGINE A FIANCO A "ENTER USERNAME" -> la dimensione vaa modificata da codice (guarda stackoverflow) -->
 
@@ -35,10 +38,17 @@
         android:textAllCaps="false"
         android:textSize="20dp"
         />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="18dp"
+        android:layout_marginBottom="12dp"
+        android:drawableLeft="@drawable/ic_copyright_black_12dp"
+        android:text=" 2019. Made by: Brusini Leonardo, Sprocati Tommaso, Tenedini Davide"
+        android:textSize="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
