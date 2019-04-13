@@ -16,7 +16,7 @@
     <EditText
         android:layout_width="300dp"
         android:layout_height="40dp"
-        android:id="@+id/name"
+        android:id="@+id/username"
         android:background="@drawable/edit_round"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="150dp"
@@ -28,11 +28,12 @@
     <!-- MANCA IMMAGINE A FIANCO A "ENTER USERNAME" -> la dimensione vaa modificata da codice (guarda stackoverflow) -->
 
     <Button
+        android:id="@+id/button_login"
         android:layout_width="200dp"
         android:layout_height="60dp"
         android:layout_centerHorizontal="true"
         android:background="@drawable/button_round"
-        android:layout_below="@id/name"
+        android:layout_below="@id/username"
         android:text="Login"
         android:layout_marginTop="20dp"
         android:textAllCaps="false"
