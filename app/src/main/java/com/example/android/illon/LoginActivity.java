@@ -39,12 +39,13 @@ public class LoginActivity extends Activity {
         button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Connection();
+                connect();
+                v.setEnabled(false);
             }
         });
     }
 
-    public void Connection() {
+    public void connect() {
         Toast t = Toast.makeText(this, "Funzione Connection() ", Toast.LENGTH_LONG);
         t.show();
         EditText edit_username = (EditText) findViewById(R.id.username);
@@ -53,7 +54,12 @@ public class LoginActivity extends Activity {
 
         String read_username = api_read_one + "?user_name='" + username + "'";
 
-        try {
+        String[] s = new String[1];
+        s[0] = read_username;
+        Connection conn = new Connection();
+        conn.execute(s);
+
+        /*try {
             //first read
             URL server = new URL(read_username);
             HttpURLConnection connection = (HttpURLConnection) server.openConnection();
@@ -98,37 +104,21 @@ public class LoginActivity extends Activity {
 
         } catch (MalformedURLException ex){
             System.out.println("URL exception");
-
-
             t = Toast.makeText(this, "url exception", Toast.LENGTH_LONG);
             t.show();
-
-
         }catch(IOException ex){
             System.out.println("URLConnection exception");
-
-
             t = Toast.makeText(this, "IO exception", Toast.LENGTH_LONG);
             t.show();
-
-
         }catch(ParserConfigurationException ex){
             System.out.println("DocumentBuilder exception");
-
-
             t = Toast.makeText(this, "Parser Configuration Exception", Toast.LENGTH_LONG);
             t.show();
-
-
         }catch(SAXException ex){
             System.out.println("Parser exception");
-
-
             t = Toast.makeText(this, "SAXException", Toast.LENGTH_LONG);
             t.show();
-
-
-        }
+        }*/
 
     }
 
