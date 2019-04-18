@@ -23,9 +23,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="41dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="41dp"
+        android:layout_marginStart="37dp"
+        android:layout_marginTop="23dp"
+        android:layout_marginEnd="45dp"
         android:layout_toStartOf="@+id/button"
         android:layout_toEndOf="@+id/imageView"
         android:text="Money:  "
@@ -71,9 +71,9 @@
         android:id="@+id/lotName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/lot"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="126dp"
+        android:layout_marginTop="15dp"
         android:text="LotName"
         android:textColor="@android:color/black"
         android:textSize="18sp"
@@ -81,13 +81,13 @@
 
     <HorizontalScrollView
         android:id="@+id/horizontal_scroll"
-        android:layout_width="wrap_content"
-        android:layout_height="58dp"
+        android:layout_width="360dp"
+        android:layout_height="60dp"
+        android:layout_below="@+id/lotName"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="30dp"
-        android:layout_marginTop="166dp"
+        android:layout_marginTop="15dp"
         android:layout_marginEnd="30dp">
 
         <LinearLayout
@@ -99,14 +99,59 @@
     </HorizontalScrollView>
 
     <TextView
+        android:id="@+id/about"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/horizontal_scroll"
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="30dp"
-        android:layout_marginTop="245dp"
+        android:layout_marginTop="9dp"
         android:layout_marginRight="30dp"
         android:background="@drawable/text_aboout"
         android:text="About: ..."
         android:textColor="@android:color/black" />
+
+    <TextView
+        android:id="@+id/currentCost"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/about"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="15dp"
+        android:text="Min bid: " />
+
+    <TextView
+        android:id="@+id/yourBid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/currentCost"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="15dp"
+        android:text="Your bid: " />
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="200dp"
+        android:layout_height="47dp"
+        android:layout_below="@+id/yourBid"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="15dp"
+        android:background="@drawable/edit_round"
+        android:drawableRight="@drawable/ic_euro_symbol_black_24dp"
+        android:hint="   Enter your bid"
+        android:paddingRight="10dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/yourBid"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="15dp"
+        android:layout_toEndOf="@+id/username"
+        android:background="@drawable/button_round"
+        android:text="BID"
+        android:textSize="20sp" />
 </RelativeLayout>
