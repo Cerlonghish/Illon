@@ -45,6 +45,8 @@ public class LoginActivity extends Activity {
     }
 
     public void Connection() {
+        Toast t = Toast.makeText(this, "Funzione Connection() ", Toast.LENGTH_LONG);
+        t.show();
         EditText edit_username = (EditText) findViewById(R.id.username);
         String username = edit_username.toString();
         boolean user_create = false;
@@ -58,7 +60,6 @@ public class LoginActivity extends Activity {
             connection.setRequestMethod("GET");
             connection.connect();
             int response_code = connection.getResponseCode();
-
 
             URL create_server = null;
             if(response_code != 200){
@@ -97,12 +98,36 @@ public class LoginActivity extends Activity {
 
         } catch (MalformedURLException ex){
             System.out.println("URL exception");
+
+
+            t = Toast.makeText(this, "url exception", Toast.LENGTH_LONG);
+            t.show();
+
+
         }catch(IOException ex){
             System.out.println("URLConnection exception");
+
+
+            t = Toast.makeText(this, "IO exception", Toast.LENGTH_LONG);
+            t.show();
+
+
         }catch(ParserConfigurationException ex){
             System.out.println("DocumentBuilder exception");
+
+
+            t = Toast.makeText(this, "Parser Configuration Exception", Toast.LENGTH_LONG);
+            t.show();
+
+
         }catch(SAXException ex){
             System.out.println("Parser exception");
+
+
+            t = Toast.makeText(this, "SAXException", Toast.LENGTH_LONG);
+            t.show();
+
+
         }
 
     }
