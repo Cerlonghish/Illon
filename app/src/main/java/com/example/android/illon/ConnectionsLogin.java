@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
@@ -33,19 +34,22 @@ public class ConnectionsLogin extends AsyncTask<String, Void, Pair<Integer,Input
 
     @Override
     protected Pair<Integer,InputStream> doInBackground (String [] url){
+        int response_code = 0;
         try{
             Pair<Integer,InputStream> p;
             URL server = new URL(url[0]);
             HttpURLConnection connection = (HttpURLConnection) server.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
-            int response_code = connection.getResponseCode();
+            response_code = connection.getResponseCode();
+
             if(response_code==200) {
                 InputStream is = server.openStream();
                 p = new Pair<>(response_code,is);
             } else {
                 p = new Pair<>(response_code,null);
             }
+            Log.d("ConnectionsLogin:","fine connessione: "+response_code);
 
             return p;
         }catch (MalformedURLException ex){
@@ -54,9 +58,5 @@ public class ConnectionsLogin extends AsyncTask<String, Void, Pair<Integer,Input
             System.out.println("URLConnection exception");
         }
         return null;
-    }
-
-    protected void onPostExecute(Integer result){
-        //delegate.processFinish(result);
     }
 }
