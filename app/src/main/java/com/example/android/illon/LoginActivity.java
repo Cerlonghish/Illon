@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,9 +16,11 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,8 +30,9 @@ public class LoginActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/user/";
     private static final String api_read_one = url + "read_one.php";
     private static final String api_create = url + "create.php";
-
+    private int response_code;
     public boolean creation = false;
+    private Button button_login = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,60 +50,84 @@ public class LoginActivity extends Activity {
     }
 
     public void connect() {
-        Toast t = Toast.makeText(this, "Funzione Connection() ", Toast.LENGTH_LONG);
+        Toast t = Toast.makeText(this, "Funzione ConnectionsLogin() ", Toast.LENGTH_LONG);
         t.show();
         EditText edit_username = (EditText) findViewById(R.id.username);
         String username = edit_username.toString();
         boolean user_create = false;
-
+        InputStream server = null;
+        InputStream create_server = null;
+        Pair<Integer, InputStream> p;
         String read_username = api_read_one + "?user_name='" + username + "'";
 
         String[] s = new String[1];
         s[0] = read_username;
-        Connection conn = new Connection();
-        conn.execute(s);
+        ConnectionsLogin conn = new ConnectionsLogin();
 
-        /*try {
-            //first read
+        conn.execute(s);
+        try {
+            p =  conn.get();
+            response_code = p.first;
+            server = p.second;
+        } catch (InterruptedException ex) {
+            t = Toast.makeText(this, "InterruptedException", Toast.LENGTH_LONG);
+            t.show();
+        } catch (ExecutionException  ex) {
+            t = Toast.makeText(this, "ExecutionException", Toast.LENGTH_LONG);
+            t.show();
+        }
+
+        try {
+           /* //first read
             URL server = new URL(read_username);
             HttpURLConnection connection = (HttpURLConnection) server.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
             int response_code = connection.getResponseCode();
+            URL create_server = null;*/
 
-            URL create_server = null;
-            if(response_code != 200){
+            if(response_code != 200){ //provo a creare un utente
                 userCreation();
 
                 if(creation) {
                     user_create = true;
-
+                    int create_response_code = 503;
                     //da aggiungere il token
                     String create_username = api_create + "?user_name='" + username + "'";
-                    create_server = new URL(create_username);
-                    HttpURLConnection create_connection = (HttpURLConnection) create_server.openConnection();
-                    create_connection.setRequestMethod("GET");
-                    create_connection.connect();
+                    s[0] = create_username;
+                    try {
+                        p = conn.execute(s).get();
+                        create_response_code = p.first;
+                        create_server = p.second;
+                    } catch (InterruptedException ex) {
+                        t = Toast.makeText(this, "InterruptedException", Toast.LENGTH_LONG);
+                        t.show();
+                    } catch (ExecutionException  ex) {
+                        t = Toast.makeText(this, "ExecutionException", Toast.LENGTH_LONG);
+                        t.show();
+                    }
 
-                    int create_response_code = create_connection.getResponseCode();
                     if (create_response_code == 200) {
                         Toast toast = Toast.makeText(this, "User '" + username + "' has been created successfully ", Toast.LENGTH_LONG);
                         toast.show();
                     }
                 }
             }
-            if(user_create || response_code == 200) {
+            if(user_create || response_code == 200) { //creo il file xml
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document file_read;
                 if(response_code == 200)
-                    file_read = db.parse(server.openStream());
+                    file_read = db.parse(server);
                 else
-                    file_read = db.parse(create_server.openStream());
+                    file_read = db.parse(create_server);
 
                 User user_login = parserXMLtoUser(file_read);
 
                 System.out.println(user_login.toString());
+                Toast toast = Toast.makeText(this, user_login.toString(), Toast.LENGTH_LONG);
+                toast.show();
+
             }
 
         } catch (MalformedURLException ex){
@@ -118,11 +146,12 @@ public class LoginActivity extends Activity {
             System.out.println("Parser exception");
             t = Toast.makeText(this, "SAXException", Toast.LENGTH_LONG);
             t.show();
-        }*/
+        }
 
+        button_login.setEnabled(true);
     }
 
-    private void userCreation(){
+    private void userCreation(){ //chiede all'utente se vuole creare un account
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle("");
         alertDialog.setMessage("Do you want to create the account?");
