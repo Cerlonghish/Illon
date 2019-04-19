@@ -30,9 +30,8 @@ public class LoginActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/user/";
     private static final String api_read_one = url + "read_one.php";
     private static final String api_create = url + "create.php";
-    private int response_code;
+
     public boolean creation = false;
-    private Button button_login = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,108 +49,105 @@ public class LoginActivity extends Activity {
     }
 
     public void connect() {
-        Toast t = Toast.makeText(this, "Funzione ConnectionsLogin() ", Toast.LENGTH_LONG);
+        Toast t = Toast.makeText(this, "Funzione Connection() ", Toast.LENGTH_LONG);
         t.show();
         EditText edit_username = (EditText) findViewById(R.id.username);
         String username = edit_username.toString();
         boolean user_create = false;
-        InputStream server = null;
-        InputStream create_server = null;
-        Pair<Integer, InputStream> p;
+
         String read_username = api_read_one + "?user_name='" + username + "'";
 
         String[] s = new String[1];
         s[0] = read_username;
-        ConnectionsLogin conn = new ConnectionsLogin();
-
-        conn.execute(s);
-        try {
-            p =  conn.get();
-            response_code = p.first;
-            server = p.second;
-        } catch (InterruptedException ex) {
-            t = Toast.makeText(this, "InterruptedException", Toast.LENGTH_LONG);
+        ConnectionsLogin read_conn = new ConnectionsLogin();
+        Pair<Integer, InputStream> read_response = null;
+        try{
+            read_response = read_conn.execute(s).get();
+        }catch (ExecutionException ex){
+            System.out.println("Execution exception");
+            t = Toast.makeText(this, "Execution exception", Toast.LENGTH_LONG);
             t.show();
-        } catch (ExecutionException  ex) {
-            t = Toast.makeText(this, "ExecutionException", Toast.LENGTH_LONG);
+        }catch (InterruptedException ex){
+            System.out.println("Interrupted exception");
+            t = Toast.makeText(this, "Interrupted exception", Toast.LENGTH_LONG);
             t.show();
         }
 
-        try {
-           /* //first read
-            URL server = new URL(read_username);
-            HttpURLConnection connection = (HttpURLConnection) server.openConnection();
-            connection.setRequestMethod("GET");
-            connection.connect();
-            int response_code = connection.getResponseCode();
-            URL create_server = null;*/
 
-            if(response_code != 200){ //provo a creare un utente
-                userCreation();
+        if(read_response.first != 200){
+            userCreation();
+            if(creation){
+                user_create = true;
 
-                if(creation) {
-                    user_create = true;
-                    int create_response_code = 503;
-                    //da aggiungere il token
-                    String create_username = api_create + "?user_name='" + username + "'";
-                    s[0] = create_username;
-                    try {
-                        p = conn.execute(s).get();
-                        create_response_code = p.first;
-                        create_server = p.second;
-                    } catch (InterruptedException ex) {
-                        t = Toast.makeText(this, "InterruptedException", Toast.LENGTH_LONG);
-                        t.show();
-                    } catch (ExecutionException  ex) {
-                        t = Toast.makeText(this, "ExecutionException", Toast.LENGTH_LONG);
-                        t.show();
-                    }
+                //da aggiungere il token
+                String create_username = api_create + "?user_name='" + username + "'";
+                s[0] = create_username;
+                ConnectionsLogin create_conn = new ConnectionsLogin();
+                Pair <Integer, InputStream> create_response = null;
 
-                    if (create_response_code == 200) {
-                        Toast toast = Toast.makeText(this, "User '" + username + "' has been created successfully ", Toast.LENGTH_LONG);
-                        toast.show();
-                    }
+                try{
+                    create_response = create_conn.execute(s).get();
+                }catch (ExecutionException ex){
+                    System.out.println("create Execution exception");
+                    t = Toast.makeText(this, "create Execution exception", Toast.LENGTH_LONG);
+                    t.show();
+                }catch (InterruptedException ex){
+                    System.out.println("create Interrupted exception");
+                    t = Toast.makeText(this, "create Interrupted exception", Toast.LENGTH_LONG);
+                    t.show();
+                }
+
+                if (create_response.first == 200) {
+                    Toast toast = Toast.makeText(this, "User '" + username + "' has been created successfully ", Toast.LENGTH_LONG);
+                    toast.show();
+                }
+
+                read_conn = new ConnectionsLogin();
+                s[0] = read_username;
+                try{
+                    read_response = read_conn.execute(s).get();
+                }catch (ExecutionException ex){
+                    System.out.println("Execution exception");
+                    t = Toast.makeText(this, "Execution exception", Toast.LENGTH_LONG);
+                    t.show();
+                }catch (InterruptedException ex){
+                    System.out.println("Interrupted exception");
+                    t = Toast.makeText(this, "Interrupted exception", Toast.LENGTH_LONG);
+                    t.show();
                 }
             }
-            if(user_create || response_code == 200) { //creo il file xml
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document file_read;
-                if(response_code == 200)
-                    file_read = db.parse(server);
-                else
-                    file_read = db.parse(create_server);
-
-                User user_login = parserXMLtoUser(file_read);
-
-                System.out.println(user_login.toString());
-                Toast toast = Toast.makeText(this, user_login.toString(), Toast.LENGTH_LONG);
-                toast.show();
-
-            }
-
-        } catch (MalformedURLException ex){
-            System.out.println("URL exception");
-            t = Toast.makeText(this, "url exception", Toast.LENGTH_LONG);
-            t.show();
-        }catch(IOException ex){
-            System.out.println("URLConnection exception");
-            t = Toast.makeText(this, "IO exception", Toast.LENGTH_LONG);
-            t.show();
-        }catch(ParserConfigurationException ex){
-            System.out.println("DocumentBuilder exception");
-            t = Toast.makeText(this, "Parser Configuration Exception", Toast.LENGTH_LONG);
-            t.show();
-        }catch(SAXException ex){
-            System.out.println("Parser exception");
-            t = Toast.makeText(this, "SAXException", Toast.LENGTH_LONG);
-            t.show();
         }
 
-        button_login.setEnabled(true);
+        //lettura file da input stream
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = null;
+        try {
+            db = dbf.newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+        Document file_read;
+        User user_login;
+        if(read_response.first == 200) {
+            try {
+                file_read = db.parse(read_response.second);
+                user_login = parserXMLtoUser(file_read);
+                Toast toast = Toast.makeText(this, user_login.toString(), Toast.LENGTH_LONG);
+                toast.show();
+            } catch (IOException ex) {
+                Toast toast = Toast.makeText(this, "IOException", Toast.LENGTH_LONG);
+                toast.show();
+            } catch (SAXException ex) {
+                Toast toast = Toast.makeText(this, "SAXException", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        }else {
+            Toast toast = Toast.makeText(this, "Lettura non riuscita.", Toast.LENGTH_LONG);
+            toast.show();
+        }
     }
 
-    private void userCreation(){ //chiede all'utente se vuole creare un account
+    private void userCreation(){
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle("");
         alertDialog.setMessage("Do you want to create the account?");
@@ -160,7 +156,7 @@ public class LoginActivity extends Activity {
                 "Yes",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                       creation = true;
+                        creation = true;
                     }
                 });
         alertDialog.setButton(
