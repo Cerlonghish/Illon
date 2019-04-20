@@ -4,4 +4,5 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="verde_chiaro">#d0edaa</color>
+    <color name="verde_pulsanti">#89f475</color>
 </resources>

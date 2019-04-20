@@ -8,7 +8,7 @@
     >
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/illonImage"
         android:layout_width="131dp"
         android:layout_height="74dp"
         android:layout_alignParentStart="true"
@@ -26,14 +26,14 @@
         android:layout_marginStart="37dp"
         android:layout_marginTop="23dp"
         android:layout_marginEnd="45dp"
-        android:layout_toStartOf="@+id/button"
-        android:layout_toEndOf="@+id/imageView"
+        android:layout_toStartOf="@+id/userButton"
+        android:layout_toEndOf="@+id/illonImage"
         android:text="Money:  "
         android:textColor="@android:color/black"
         android:textSize="18sp" />
 
     <ImageButton
-        android:id="@+id/button"
+        android:id="@+id/userButton"
         android:layout_width="63dp"
         android:layout_height="63dp"
 
@@ -80,7 +80,7 @@
         android:textStyle="bold" />
 
     <HorizontalScrollView
-        android:id="@+id/horizontal_scroll"
+        android:id="@+id/lotImages"
         android:layout_width="360dp"
         android:layout_height="60dp"
         android:layout_below="@+id/lotName"
@@ -102,7 +102,7 @@
         android:id="@+id/about"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/horizontal_scroll"
+        android:layout_below="@+id/lotImages"
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="30dp"
         android:layout_marginTop="9dp"
@@ -112,7 +112,7 @@
         android:textColor="@android:color/black" />
 
     <TextView
-        android:id="@+id/currentCost"
+        android:id="@+id/minBid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/about"
@@ -125,14 +125,14 @@
         android:id="@+id/yourBid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/currentCost"
+        android:layout_below="@+id/minBid"
         android:layout_alignParentStart="true"
         android:layout_marginStart="30dp"
         android:layout_marginTop="15dp"
         android:text="Your bid: " />
 
     <EditText
-        android:id="@+id/username"
+        android:id="@+id/enterBid"
         android:layout_width="200dp"
         android:layout_height="47dp"
         android:layout_below="@+id/yourBid"
@@ -140,17 +140,19 @@
         android:layout_marginStart="30dp"
         android:layout_marginTop="15dp"
         android:background="@drawable/edit_round"
-        android:drawableRight="@drawable/ic_euro_symbol_black_24dp"
-        android:hint="   Enter your bid"
-        android:paddingRight="10dp" />
+        android:drawableLeft="@drawable/ic_euro_symbol_black_24dp"
+        android:hint="Enter your bid"
+        android:paddingLeft="10dp"
+        android:drawablePadding="10dp"/>
 
     <Button
+        android:id="@+id/bidButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/yourBid"
         android:layout_marginStart="20dp"
         android:layout_marginTop="15dp"
-        android:layout_toEndOf="@+id/username"
+        android:layout_toEndOf="@+id/enterBid"
         android:background="@drawable/button_round"
         android:text="BID"
         android:textSize="20sp" />
