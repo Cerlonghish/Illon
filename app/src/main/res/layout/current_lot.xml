@@ -23,12 +23,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="37dp"
+        android:layout_marginStart="21dp"
         android:layout_marginTop="23dp"
-        android:layout_marginEnd="45dp"
+        android:layout_marginEnd="29dp"
         android:layout_toStartOf="@+id/userButton"
         android:layout_toEndOf="@+id/illonImage"
-        android:text="Money:  "
+        android:text="Money: "
         android:textColor="@android:color/black"
         android:textSize="18sp" />
 
@@ -50,8 +50,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="29dp"
-        android:layout_marginTop="93dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="101dp"
         android:text="tRimanente"
         android:textColor="@android:color/black" />
 
@@ -142,6 +142,8 @@
         android:background="@drawable/edit_round"
         android:drawableLeft="@drawable/ic_euro_symbol_black_24dp"
         android:hint="Enter your bid"
+        android:digits="0123456789"
+        android:inputType="phone"
         android:paddingLeft="10dp"
         android:drawablePadding="10dp"/>
 

@@ -53,9 +53,9 @@ public class ConnectionsLogin extends AsyncTask<String, Void, Pair<Integer,Input
 
             return p;
         }catch (MalformedURLException ex){
-            System.out.println("URL exception");
+            Log.d("CONNECTION:Eccezione","URL exception");
         }catch(IOException ex){
-            System.out.println("URLConnection exception");
+            Log.d("CONNECTION:Eccezione","URLConnection exception");
         }
         return null;
     }
