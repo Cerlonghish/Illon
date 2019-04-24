@@ -2,4 +2,8 @@
     <string name="app_name">Illon</string>
     <string name="activity2_LotActivity">LotActivity</string>
     <string name="activity3_user">UserActivity</string>
+    <string name="hint_user_name">Type your username here&#8230;</string>
+    <string name="login_string">LOGIN</string>
+    <string name="copyrigtht_string"> 2019. Made by: Brusini Leonardo, Sprocati Tommaso, Tenedini Davide</string>
+    <string name="login_desc">Login</string>
 </resources>

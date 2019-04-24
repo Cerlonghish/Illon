@@ -6,18 +6,11 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.util.Pair;
-import android.widget.Toast;
-
-import org.xml.sax.SAXException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
 @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
@@ -34,7 +27,7 @@ public class ConnectionsLogin extends AsyncTask<String, Void, Pair<Integer,Input
 
     @Override
     protected Pair<Integer,InputStream> doInBackground (String [] url){
-        int response_code = 0;
+        int response_code;
         try{
             Pair<Integer,InputStream> p;
             URL server = new URL(url[0]);

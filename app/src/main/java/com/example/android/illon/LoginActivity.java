@@ -11,53 +11,34 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
-import java.io.StringWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 public class LoginActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/user/";
     private static final String api_read_one = url + "read_one.php";
     private static final String api_create = url + "create.php";
-    private Button button_login;
-    private EditText edit_username;
     private String username;
     private String read_username;
     private String create_username;
     public boolean creation = false;
     private Pair <Integer, InputStream> create_response;
     private String[] s = new String[1];
-    private Toast t;
     private Pair<Integer, InputStream> read_response;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        button_login = (Button) findViewById(R.id.button_login);
+        Button button_login =  findViewById(R.id.button_login);
         button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,11 +48,11 @@ public class LoginActivity extends Activity {
     }
 
     public void connect() {
-        Button button_login = (Button)findViewById(R.id.button_login);
+        Button button_login = findViewById(R.id.button_login);
         button_login.setEnabled(false); //disabilito il bottone
 
         //prendo l'username dall'edit text
-        edit_username = (EditText) findViewById(R.id.username);
+        EditText edit_username = findViewById(R.id.username);
         username = edit_username.getText().toString();
         read_username = api_read_one + "?user_name=" + username;
 
@@ -105,6 +86,7 @@ public class LoginActivity extends Activity {
 
             User user_login = null;
             try {
+                assert db != null;
                 file_read = db.parse(read_response.second);
 
                 user_login = parserXMLtoUser(file_read);
@@ -114,6 +96,7 @@ public class LoginActivity extends Activity {
             } catch (SAXException ex) {
                 Log.d("LOGIN:Eccezione","SAXException");
             }
+
             button_login.setEnabled(true);
 
             //lancio l'activity delle aste passandogli l'user
@@ -178,6 +161,7 @@ public class LoginActivity extends Activity {
                                 User user_login=null;
 
                                 try {
+                                    assert db != null;
                                     file_read = db.parse(read_response.second);
 
                                     user_login = parserXMLtoUser(file_read);
@@ -214,9 +198,7 @@ public class LoginActivity extends Activity {
         Node moneyTag = eUser.getElementsByTagName("user_money").item(0);
         int user_money = Integer.parseInt(moneyTag.getTextContent());
 
-        User u = new User(user_id, user_name, user_money);
-
-        return u;
+        return new User(user_id, user_name, user_money);
     }
 
     public void launchLotActivity(User u) {
