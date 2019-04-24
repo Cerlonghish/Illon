@@ -1,6 +1,6 @@
 package com.example.android.illon;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.Objects;
 
 public class Lot {
@@ -9,7 +9,7 @@ public class Lot {
     private String about;
     private int min_value;
     private int value;
-    private Date start_time;    //Date = SQL Date
+    private Date start_time;    //Date = util.Date
     private int id_winner;
 
     public Lot(int id, String name, String about, int min_value, int value, Date start_time, int id_winner) {

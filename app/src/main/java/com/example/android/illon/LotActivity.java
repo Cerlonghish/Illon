@@ -21,7 +21,11 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Date;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -114,12 +118,15 @@ public class LotActivity extends Activity {
         lot.setText("LOT #"+l.getId());
         lotName.setText(l.getName());
         //tRimanente
+
+
         about.setText("About: "+l.getAbout());
         minBid.setText("Min bid: "+l.getMin_value());
         //deve essere null finchè non viene fatta la prima bid
-        //yourBid.setText("Your bid: "+l.getValue());
         if(l.getValue() == -1)
             yourBid.setText("Your bid: X");
+        else
+            yourBid.setText("Your bid: "+l.getValue());
 
         //manca immagini
     }
@@ -138,15 +145,22 @@ public class LotActivity extends Activity {
         //null fino alla prima bid
         //Node valueTag = eLot.getElementsByTagName("lot_value").item(0);
         //int lot_value = Integer.parseInt(valueTag.getTextContent());
-                                                                            //verificare formato data
-        //Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
-        //Date lot_start_time = Date.valueOf(dateTag.getTextContent());
+
+        Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
+        Log.d("DEBUGGGGGGGGGGGGGGGGGGG",dateTag.getTextContent());
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALIAN);
+        Date lot_start_time = null;
+        try {
+            lot_start_time = (Date) format.parse(dateTag.getTextContent());
+        } catch (ParseException e) {
+            Log.d("LOT:Eccezione","ParseException");
+        }
 
         //null finchè non finisce (ovvio)
         //Node winnerTag = eLot.getElementsByTagName("lot_winner").item(0);
         //int lot_winner = Integer.parseInt(winnerTag.getTextContent());
 
-        Lot l = new Lot(lot_id, lot_name, lot_about, lot_min_value, -1, null, -1);
+        Lot l = new Lot(lot_id, lot_name, lot_about, lot_min_value, -1, lot_start_time, -1);
 
         return l;
     }
