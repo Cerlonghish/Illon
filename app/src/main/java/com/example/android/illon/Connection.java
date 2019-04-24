@@ -14,14 +14,14 @@ import java.net.URL;
 
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
 @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
-public class ConnectionsLogin extends AsyncTask<String, Void, Pair<Integer,InputStream>> {
+public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream>> {
 
    /* public interface AsyncResponse {
         void processFinish(Integer output);
     }
     public AsyncResponse delegate = null;
 
-    public ConnectionsLogin(AsyncResponse delegate){
+    public Connection(AsyncResponse delegate){
         this.delegate = delegate;
     }*/
 
@@ -42,7 +42,7 @@ public class ConnectionsLogin extends AsyncTask<String, Void, Pair<Integer,Input
             } else {
                 p = new Pair<>(response_code,null);
             }
-            Log.d("ConnectionsLogin:","fine connessione: "+response_code);
+            Log.d("Connection:","fine connessione: "+response_code);
 
             return p;
         }catch (MalformedURLException ex){

@@ -58,7 +58,7 @@ public class LoginActivity extends Activity {
 
         //prima connessione: verifica presenza username nel database
         s[0] = read_username;
-        ConnectionsLogin read_conn = new ConnectionsLogin();
+        Connection read_conn = new Connection();
         read_response = null;
         try{
             read_response = read_conn.execute(s).get();
@@ -120,7 +120,7 @@ public class LoginActivity extends Activity {
                         s[0] = create_username;
 
                         //connessione per creare l'user nel database
-                        ConnectionsLogin create_conn = new ConnectionsLogin();
+                        Connection create_conn = new Connection();
                         create_response = null;
                         try{
                             create_response = create_conn.execute(s).get();
@@ -136,7 +136,7 @@ public class LoginActivity extends Activity {
                             toast.show();
 
                             //ultima connessione per leggere i dati dell'utente dopo averli creati
-                            ConnectionsLogin read_conn = new ConnectionsLogin();
+                            Connection read_conn = new Connection();
                             s[0] = read_username;
                             try{
                                 read_response = read_conn.execute(s).get();

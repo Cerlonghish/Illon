@@ -2,6 +2,7 @@ package com.example.android.illon;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +25,7 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -34,7 +36,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class LotActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/lot/read_current.php";
-
+    private long millsRimanenti;
+    private CountDownTimer countDownTimer;
     private User u;
     private TextView money,lot,lotName,tRimanente,minBid,yourBid,about;
     private EditText enterBid;
@@ -79,7 +82,7 @@ public class LotActivity extends Activity {
         s[0] = url;
         Pair <Integer, InputStream> read_response =  null;
 
-        ConnectionsLogin read_conn = new ConnectionsLogin();
+        Connection read_conn = new Connection();
         try{
             read_response = read_conn.execute(s).get();
         }catch (ExecutionException ex){
@@ -115,18 +118,35 @@ public class LotActivity extends Activity {
     }
 
     public void setLotView(Lot l){
+        Log.d("SETLOTVIEW", "ENTRATO");
         lot.setText("LOT #"+l.getId());
         lotName.setText(l.getName());
         //tRimanente
+        long millsStartTime = l.getStart_time().getTime();
+        millsStartTime += 600000;
+        millsRimanenti = millsStartTime - Calendar.getInstance().getTime().getTime();
+        //millsRimanenti=600000;
+        Log.d("MILLSRIMANENTI", ""+millsRimanenti);
+        countDownTimer = new CountDownTimer(millsRimanenti, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                millsRimanenti = millisUntilFinished;
+                updateTimer(millsRimanenti);
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        }.start();
 
 
         about.setText("About: "+l.getAbout());
         minBid.setText("Min bid: "+l.getMin_value());
         //deve essere null finchè non viene fatta la prima bid
+        //yourBid.setText("Your bid: "+l.getValue());
         if(l.getValue() == -1)
             yourBid.setText("Your bid: X");
-        else
-            yourBid.setText("Your bid: "+l.getValue());
 
         //manca immagini
     }
@@ -143,9 +163,12 @@ public class LotActivity extends Activity {
         Node min_valueTag = eLot.getElementsByTagName("lot_min_value").item(0);
         int lot_min_value = Integer.parseInt(min_valueTag.getTextContent());
         //null fino alla prima bid
-        //Node valueTag = eLot.getElementsByTagName("lot_value").item(0);
+        Node valueTag = eLot.getElementsByTagName("lot_value").item(0);
         //int lot_value = Integer.parseInt(valueTag.getTextContent());
-
+        int lot_value = -1;
+        if(!valueTag.getTextContent().equals("NULL")) {
+            lot_value = Integer.parseInt(valueTag.getTextContent()); //VALUE
+        }
         Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
         Log.d("DEBUGGGGGGGGGGGGGGGGGGG",dateTag.getTextContent());
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALIAN);
@@ -160,7 +183,7 @@ public class LotActivity extends Activity {
         //Node winnerTag = eLot.getElementsByTagName("lot_winner").item(0);
         //int lot_winner = Integer.parseInt(winnerTag.getTextContent());
 
-        Lot l = new Lot(lot_id, lot_name, lot_about, lot_min_value, -1, lot_start_time, -1);
+        Lot l = new Lot(lot_id, lot_name, lot_about, lot_min_value, lot_value, lot_start_time, -1);
 
         return l;
     }
@@ -170,5 +193,15 @@ public class LotActivity extends Activity {
         Intent intent = new Intent(this, UserActivity.class);
         intent.putExtra("User", u);
         startActivity(intent);
+    }
+
+
+    public void updateTimer (long millis) {
+        int minutes = (int) (millis/60000);
+        int seconds = (int) (millis%60000/1000);
+        String timeLeftText=minutes+":";
+        if(seconds<10) timeLeftText+="0";
+        timeLeftText += seconds;
+        tRimanente.setText(timeLeftText);
     }
 }
