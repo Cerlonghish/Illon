@@ -13,18 +13,26 @@ import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.Volley;
+import com.android.volley.RequestQueue;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -36,6 +44,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class LotActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/lot/read_current.php";
+    private static final String urlBidButton = "http://164.132.47.236/illon/illon_api/bid/create.php";
+    private static final String urlPic = "http://164.132.47.236/illon/illon_api/pic/read.php";
     private long millsRimanenti;
     private CountDownTimer countDownTimer;
     private User u;
@@ -45,6 +55,10 @@ public class LotActivity extends Activity {
     private ImageButton userButton;
     private ImageView illonImage;
     private HorizontalScrollView lotImages;
+    private  Lot current_lot;
+    private LinearLayout containter;
+    private RequestQueue mRequestQueue;
+    private ImageLoader imageLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +77,7 @@ public class LotActivity extends Activity {
         userButton = (ImageButton) findViewById(R.id.userButton);
         illonImage = (ImageView) findViewById(R.id.illonImage);
         lotImages = (HorizontalScrollView) findViewById(R.id.lotImages);
+        containter = (LinearLayout) lotImages.findViewById(R.id.container);
 
         money.setText("Money:"+u.getMoney());
         userButton.setOnClickListener(new View.OnClickListener() {
@@ -71,10 +86,53 @@ public class LotActivity extends Activity {
                 launchLotActivity(u);
             }
         });
+        bidButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        sendBid();
+                    }
+                }
+        );
 
-        Lot current_lot = setLot();
+        current_lot = setLot();
 
         setLotView(current_lot);
+    }
+
+    private void sendBid() {
+        String s[] = new String[1];
+
+        Pair <Integer, InputStream> read_response =  null;
+        //prende il numero
+        int offerta = -1;
+        if(enterBid.getText().toString().length()>0) {
+            offerta = Integer.parseInt(enterBid.getText().toString());
+        }
+        if((current_lot.getValue() != -1 ? offerta>current_lot.getValue() : offerta>=current_lot.getMin_value()) && u.getMoney()>=offerta) {
+            Connection c = new Connection();
+            s[0] = urlBidButton+"?bid_user="+u.getId()+"&bid_lot="+current_lot.getId()+"&bid_value="+offerta;
+            try{
+                read_response = c.execute(s).get();
+            }catch (ExecutionException ex){
+                Log.d("LOT:Eccezione","Execution exception");
+            }catch (InterruptedException ex){
+                Log.d("LOT:Eccezione","Interrupted exception");
+            }
+            if(read_response.first==201) {
+                Toast.makeText(this,"Bid created successfully",Toast.LENGTH_SHORT).show();
+                u.setMyBid(offerta);
+            } else {
+                Toast.makeText(this,"An error uccurred while creating bid "+read_response.first,Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,""+s[0],Toast.LENGTH_SHORT).show();
+            }
+            finish();
+            overridePendingTransition(0, 0);
+            startActivity(getIntent());
+            overridePendingTransition(0, 0);
+        } else  {
+            Toast.makeText(this,"Bid too small",Toast.LENGTH_SHORT).show();
+        }
     }
 
     public Lot setLot(){
@@ -136,19 +194,73 @@ public class LotActivity extends Activity {
 
             @Override
             public void onFinish() {
-
+                u.setMyBid(-1);
             }
         }.start();
 
 
         about.setText("About: "+l.getAbout());
-        minBid.setText("Min bid: "+l.getMin_value());
+        if(l.getValue()!=-1) {
+            minBid.setText("Min bid: " + l.getValue());
+        } else {
+            minBid.setText("Min bid: " + l.getMin_value());
+        }
         //deve essere null finchè non viene fatta la prima bid
         //yourBid.setText("Your bid: "+l.getValue());
-        if(l.getValue() == -1)
+        if(u.getMyBid() == -1)
             yourBid.setText("Your bid: X");
+        else
+            yourBid.setText("Your bid: "+u.getMyBid());
 
         //manca immagini
+        String s[] = new String[1];
+        s[0] = urlPic+"?pic_lot="+l.getId();
+        Connection c = new Connection();
+        Pair <Integer, InputStream> read_response =  null;
+        try{
+            read_response = c.execute(s).get();
+        }catch (ExecutionException ex){
+            Log.d("LOT:Eccezione","Execution exception");
+        }catch (InterruptedException ex){
+            Log.d("LOT:Eccezione","Interrupted exception");
+        }
+        ArrayList<String> imageUrls =new ArrayList();
+        if(read_response.first == 200) {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = null;
+            try {
+                db = dbf.newDocumentBuilder();
+            } catch (ParserConfigurationException e) {
+                Log.d("LOT:Eccezione","ParserConfigurationException");
+            }
+            Document file_read;
+            try {
+                file_read = db.parse(read_response.second);
+                parserXMLtoImages(imageUrls, file_read);
+                mRequestQueue = Volley.newRequestQueue(this);
+               // imageLoader = new ImageLoader(mRequestQueue, );
+                for(int i=0;i<imageUrls.size();i++) {
+                    ImageView image = new ImageView(this);
+
+                }
+            } catch (IOException ex) {
+                Log.d("LOT:Eccezione","IOException");
+            } catch (SAXException ex) {
+                Log.d("LOT:Eccezione","SAXException");
+            }
+        } else {
+            Toast.makeText(this,"Unable to find Images",Toast.LENGTH_SHORT);
+        }
+
+    }
+
+    private void parserXMLtoImages(ArrayList<String> imageUrls, Document file) {
+        NodeList nl = file.getElementsByTagName("pic");
+        for(int i=0;i<nl.getLength();i++) {
+            Element e = (Element) nl.item(i);
+            String p = e.getElementsByTagName("pic_path").item(0).getTextContent();
+            imageUrls.add(p);
+        }
     }
 
     private Lot parserXMLtoLot(Document file){

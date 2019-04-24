@@ -7,11 +7,13 @@ public class User implements Serializable {
     private int id;
     private String name;
     private int money;
+    private int myBid;
 
     public User(int id, String name, int money){
         this.id = id;
         this.name = name;
         this.money = money;
+        myBid = -1;
     }
 
     public int getId() {
@@ -36,6 +38,14 @@ public class User implements Serializable {
 
     public void setMoney(int money) {
         this.money = money;
+    }
+
+    public int getMyBid() {
+        return myBid;
+    }
+
+    public void setMyBid(int myBid) {
+        this.myBid = myBid;
     }
 
     @Override
