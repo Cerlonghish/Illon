@@ -2,11 +2,12 @@ package com.example.android.illon;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.CountDownTimer;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,10 +23,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import com.android.volley.toolbox.ImageLoader;
-import com.android.volley.toolbox.Volley;
-import com.android.volley.RequestQueue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,27 +54,25 @@ public class LotActivity extends Activity {
     private HorizontalScrollView lotImages;
     private  Lot current_lot;
     private LinearLayout containter;
-    private RequestQueue mRequestQueue;
-    private ImageLoader imageLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.current_lot);
         u = (User) getIntent().getSerializableExtra("User");
-        money = (TextView) findViewById(R.id.money);
-        lot = (TextView) findViewById(R.id.lot);
-        lotName = (TextView) findViewById(R.id.lotName);
-        tRimanente = (TextView) findViewById(R.id.tRimanente);
-        minBid = (TextView) findViewById(R.id.minBid);
-        yourBid = (TextView) findViewById(R.id.yourBid);
-        about = (TextView) findViewById(R.id.about);
-        enterBid = (EditText) findViewById(R.id.enterBid);
-        bidButton = (Button) findViewById(R.id.bidButton);
-        userButton = (ImageButton) findViewById(R.id.userButton);
-        illonImage = (ImageView) findViewById(R.id.illonImage);
-        lotImages = (HorizontalScrollView) findViewById(R.id.lotImages);
-        containter = (LinearLayout) lotImages.findViewById(R.id.container);
+        money = findViewById(R.id.money);
+        lot =findViewById(R.id.lot);
+        lotName = findViewById(R.id.lotName);
+        tRimanente =findViewById(R.id.tRimanente);
+        minBid = findViewById(R.id.minBid);
+        yourBid =  findViewById(R.id.yourBid);
+        about = findViewById(R.id.about);
+        enterBid = findViewById(R.id.enterBid);
+        bidButton = findViewById(R.id.bidButton);
+        userButton = findViewById(R.id.userButton);
+        illonImage = findViewById(R.id.illonImage);
+        lotImages = findViewById(R.id.lotImages);
+        containter = lotImages.findViewById(R.id.container);
 
         money.setText("Money:"+u.getMoney());
         userButton.setOnClickListener(new View.OnClickListener() {
@@ -135,6 +130,170 @@ public class LotActivity extends Activity {
         }
     }
 
+
+
+    public void setLotView(Lot l){
+        illonImage.setImageDrawable(getDrawable(R.drawable.illon_logo));
+        //ID E NOME DEL LOTTO
+        lot.setText("LOT #"+l.getId());
+        lotName.setText(l.getName());
+
+        //tRimanente
+        long millsStartTime = l.getStart_time().getTime();
+        millsStartTime += 600000;
+        millsRimanenti = millsStartTime - Calendar.getInstance().getTime().getTime();
+        //millsRimanenti=600000;
+        countDownTimer = new CountDownTimer(millsRimanenti, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                millsRimanenti = millisUntilFinished;
+                updateTimer(millsRimanenti);
+            }
+
+            @Override
+            public void onFinish() {
+                u.setMyBid(-1);
+            }
+        }.start();
+
+        //ABOUT
+        about.setText("About: "+l.getAbout());
+
+        //MINBID
+        if(l.getValue()!=-1) {
+            minBid.setText("Min bid: " + l.getValue());
+        } else {
+            minBid.setText("Min bid: " + l.getMin_value());
+        }
+        //deve essere null finchè non viene fatta la prima bid
+        //yourBid.setText("Your bid: "+l.getValue());
+        //YOURBID --> DA SISTEMARE
+        if(u.getMyBid() == -1)
+            yourBid.setText("Your bid: X");
+        else
+            yourBid.setText("Your bid: "+u.getMyBid());
+
+        //IMMAGINI
+        String s[] = new String[1];
+        s[0] = urlPic+"?pic_lot="+l.getId();
+        Connection c = new Connection();
+        Pair <Integer, InputStream> read_response =  null;
+        try{
+            read_response = c.execute(s).get();
+        }catch (ExecutionException ex){
+            Log.d("LOT:Eccezione","Execution exception");
+        }catch (InterruptedException ex){
+            Log.d("LOT:Eccezione","Interrupted exception");
+        }
+        ArrayList<String> imageUrls =new ArrayList();
+        if(read_response.first == 200) {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = null;
+            try {
+                db = dbf.newDocumentBuilder();
+            } catch (ParserConfigurationException e) {
+                Log.d("LOT:Eccezione","ParserConfigurationException");
+            }
+            Document file_read;
+            try {
+                file_read = db.parse(read_response.second);
+                parserXMLtoImages(imageUrls, file_read);
+                //ORA SI HA L'ARRAYLIST DEGLI URL
+                LayoutInflater inflater = LayoutInflater.from(this);
+
+
+                for(int i=0;i<imageUrls.size();i++) {
+                    View view = inflater.inflate(R.layout.item_image, containter, false);
+                    ImageView iv = view.findViewById(R.id.imageList);
+                    Bitmap difi = new DownloadImageFromInternet(iv).execute(imageUrls.get(i)).get();
+                    if(difi != null && iv!=null) {
+                        iv.setImageBitmap(difi);
+                    } else {
+                        Log.d("ERROR", "setLotView: ");
+                    }
+                    containter.addView(view);
+                }
+
+
+            } catch (IOException ex) {
+                Log.d("LOT:Eccezione","IOException");
+            } catch (SAXException ex) {
+                Log.d("LOT:Eccezione","SAXException");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Toast.makeText(this,"Unable to find Images",Toast.LENGTH_SHORT);
+        }
+    }
+
+
+
+//----------- OK -----------------------------------------------------------------------------------------------
+    private void parserXMLtoImages(ArrayList<String> imageUrls, Document file) {
+        NodeList nl = file.getElementsByTagName("pic");
+        for(int i=0;i<nl.getLength();i++) {
+            Element e = (Element) nl.item(i);
+            String p = e.getElementsByTagName("pic_path").item(0).getTextContent();
+            imageUrls.add(p);
+        }
+    }
+
+    private Lot parserXMLtoLot(Document file){
+        Node user = file.getElementsByTagName("lot").item(0);
+        Element eLot = (Element)user;
+        Node idTag = eLot.getElementsByTagName("lot_id").item(0);
+        int lot_id = Integer.parseInt(idTag.getTextContent());
+        Node nameTag =  eLot.getElementsByTagName("lot_name").item(0);
+        String lot_name = nameTag.getTextContent();
+        Node aboutTag =  eLot.getElementsByTagName("lot_about").item(0);
+        String lot_about = aboutTag.getTextContent();
+        Node min_valueTag = eLot.getElementsByTagName("lot_min_value").item(0);
+        int lot_min_value = Integer.parseInt(min_valueTag.getTextContent());
+        //null fino alla prima bid
+        Node valueTag = eLot.getElementsByTagName("lot_value").item(0);
+        //int lot_value = Integer.parseInt(valueTag.getTextContent());
+        int lot_value = -1;
+        if(!valueTag.getTextContent().equals("NULL")) {
+            lot_value = Integer.parseInt(valueTag.getTextContent()); //VALUE
+        }
+        Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALIAN);
+        Date lot_start_time = null;
+        try {
+            lot_start_time = (Date) format.parse(dateTag.getTextContent());
+        } catch (ParseException e) {
+            Log.d("LOT:Eccezione","ParseException");
+        }
+
+        //null finchè non finisce (ovvio)
+        //Node winnerTag = eLot.getElementsByTagName("lot_winner").item(0);
+        //int lot_winner = Integer.parseInt(winnerTag.getTextContent());
+
+        Lot l = new Lot(lot_id, lot_name, lot_about, lot_min_value, lot_value, lot_start_time, -1);
+
+        return l;
+    }
+
+    public void launchLotActivity(User u) {
+        Log.d("LOT", "APRO LAYOUT USER");
+        Intent intent = new Intent(this, UserActivity.class);
+        intent.putExtra("User", u);
+        startActivity(intent);
+    }
+
+
+    public void updateTimer (long millis) {
+        int minutes = (int) (millis/60000);
+        int seconds = (int) (millis%60000/1000);
+        String timeLeftText=minutes+":";
+        if(seconds<10) timeLeftText+="0";
+        timeLeftText += seconds;
+        tRimanente.setText(timeLeftText);
+    }
+
     public Lot setLot(){
         String s[] = new String[1];
         s[0] = url;
@@ -173,147 +332,5 @@ public class LotActivity extends Activity {
             return null;
         }
         return null;
-    }
-
-    public void setLotView(Lot l){
-        Log.d("SETLOTVIEW", "ENTRATO");
-        lot.setText("LOT #"+l.getId());
-        lotName.setText(l.getName());
-        //tRimanente
-        long millsStartTime = l.getStart_time().getTime();
-        millsStartTime += 600000;
-        millsRimanenti = millsStartTime - Calendar.getInstance().getTime().getTime();
-        //millsRimanenti=600000;
-        Log.d("MILLSRIMANENTI", ""+millsRimanenti);
-        countDownTimer = new CountDownTimer(millsRimanenti, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                millsRimanenti = millisUntilFinished;
-                updateTimer(millsRimanenti);
-            }
-
-            @Override
-            public void onFinish() {
-                u.setMyBid(-1);
-            }
-        }.start();
-
-
-        about.setText("About: "+l.getAbout());
-        if(l.getValue()!=-1) {
-            minBid.setText("Min bid: " + l.getValue());
-        } else {
-            minBid.setText("Min bid: " + l.getMin_value());
-        }
-        //deve essere null finchè non viene fatta la prima bid
-        //yourBid.setText("Your bid: "+l.getValue());
-        if(u.getMyBid() == -1)
-            yourBid.setText("Your bid: X");
-        else
-            yourBid.setText("Your bid: "+u.getMyBid());
-
-        //manca immagini
-        String s[] = new String[1];
-        s[0] = urlPic+"?pic_lot="+l.getId();
-        Connection c = new Connection();
-        Pair <Integer, InputStream> read_response =  null;
-        try{
-            read_response = c.execute(s).get();
-        }catch (ExecutionException ex){
-            Log.d("LOT:Eccezione","Execution exception");
-        }catch (InterruptedException ex){
-            Log.d("LOT:Eccezione","Interrupted exception");
-        }
-        ArrayList<String> imageUrls =new ArrayList();
-        if(read_response.first == 200) {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = null;
-            try {
-                db = dbf.newDocumentBuilder();
-            } catch (ParserConfigurationException e) {
-                Log.d("LOT:Eccezione","ParserConfigurationException");
-            }
-            Document file_read;
-            try {
-                file_read = db.parse(read_response.second);
-                parserXMLtoImages(imageUrls, file_read);
-                mRequestQueue = Volley.newRequestQueue(this);
-               // imageLoader = new ImageLoader(mRequestQueue, );
-                for(int i=0;i<imageUrls.size();i++) {
-                    ImageView image = new ImageView(this);
-
-                }
-            } catch (IOException ex) {
-                Log.d("LOT:Eccezione","IOException");
-            } catch (SAXException ex) {
-                Log.d("LOT:Eccezione","SAXException");
-            }
-        } else {
-            Toast.makeText(this,"Unable to find Images",Toast.LENGTH_SHORT);
-        }
-
-    }
-
-    private void parserXMLtoImages(ArrayList<String> imageUrls, Document file) {
-        NodeList nl = file.getElementsByTagName("pic");
-        for(int i=0;i<nl.getLength();i++) {
-            Element e = (Element) nl.item(i);
-            String p = e.getElementsByTagName("pic_path").item(0).getTextContent();
-            imageUrls.add(p);
-        }
-    }
-
-    private Lot parserXMLtoLot(Document file){
-        Node user = file.getElementsByTagName("lot").item(0);
-        Element eLot = (Element)user;
-        Node idTag = eLot.getElementsByTagName("lot_id").item(0);
-        int lot_id = Integer.parseInt(idTag.getTextContent());
-        Node nameTag =  eLot.getElementsByTagName("lot_name").item(0);
-        String lot_name = nameTag.getTextContent();
-        Node aboutTag =  eLot.getElementsByTagName("lot_about").item(0);
-        String lot_about = aboutTag.getTextContent();
-        Node min_valueTag = eLot.getElementsByTagName("lot_min_value").item(0);
-        int lot_min_value = Integer.parseInt(min_valueTag.getTextContent());
-        //null fino alla prima bid
-        Node valueTag = eLot.getElementsByTagName("lot_value").item(0);
-        //int lot_value = Integer.parseInt(valueTag.getTextContent());
-        int lot_value = -1;
-        if(!valueTag.getTextContent().equals("NULL")) {
-            lot_value = Integer.parseInt(valueTag.getTextContent()); //VALUE
-        }
-        Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
-        Log.d("DEBUGGGGGGGGGGGGGGGGGGG",dateTag.getTextContent());
-        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALIAN);
-        Date lot_start_time = null;
-        try {
-            lot_start_time = (Date) format.parse(dateTag.getTextContent());
-        } catch (ParseException e) {
-            Log.d("LOT:Eccezione","ParseException");
-        }
-
-        //null finchè non finisce (ovvio)
-        //Node winnerTag = eLot.getElementsByTagName("lot_winner").item(0);
-        //int lot_winner = Integer.parseInt(winnerTag.getTextContent());
-
-        Lot l = new Lot(lot_id, lot_name, lot_about, lot_min_value, lot_value, lot_start_time, -1);
-
-        return l;
-    }
-
-    public void launchLotActivity(User u) {
-        Log.d("LOT", "APRO LAYOUT USER");
-        Intent intent = new Intent(this, UserActivity.class);
-        intent.putExtra("User", u);
-        startActivity(intent);
-    }
-
-
-    public void updateTimer (long millis) {
-        int minutes = (int) (millis/60000);
-        int seconds = (int) (millis%60000/1000);
-        String timeLeftText=minutes+":";
-        if(seconds<10) timeLeftText+="0";
-        timeLeftText += seconds;
-        tRimanente.setText(timeLeftText);
     }
 }

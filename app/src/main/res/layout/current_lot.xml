@@ -24,8 +24,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_marginStart="21dp"
-        android:layout_marginTop="23dp"
-        android:layout_marginEnd="29dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="30dp"
         android:layout_toStartOf="@+id/userButton"
         android:layout_toEndOf="@+id/illonImage"
         android:text="Money: "
@@ -69,7 +69,7 @@
 
     <TextView
         android:id="@+id/lotName"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/lot"
         android:layout_centerHorizontal="true"
@@ -77,18 +77,21 @@
         android:text="LotName"
         android:textColor="@android:color/black"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginHorizontal="30dp"
+        android:textAlignment="center"/>
 
     <HorizontalScrollView
         android:id="@+id/lotImages"
         android:layout_width="360dp"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/lotName"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="30dp"
         android:layout_marginTop="15dp"
-        android:layout_marginEnd="30dp">
+        android:layout_marginEnd="30dp"
+        android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/container"
