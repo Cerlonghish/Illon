@@ -39,10 +39,10 @@
 
     <TextView
         android:id="@+id/product_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="12dp"
+        android:layout_width="205dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="10dp"
         android:text="NAME"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/product_pic"
@@ -50,10 +50,10 @@
 
     <TextView
         android:id="@+id/product_desc"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="12dp"
+        android:layout_width="277dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="15dp"
         android:text="DESCRIZIONE"
         android:textSize="16sp"
         app:layout_constraintStart_toEndOf="@+id/product_pic"
@@ -63,8 +63,8 @@
         android:id="@+id/product_price"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="100dp"
-        android:layout_marginTop="14dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
         android:text="PRICE"
         android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/product_name"
@@ -78,6 +78,6 @@
         android:layout_marginTop="5dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        android:src="@drawable/illon_logo" />
 
 </android.support.constraint.ConstraintLayout>

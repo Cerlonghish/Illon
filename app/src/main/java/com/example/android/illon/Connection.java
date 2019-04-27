@@ -15,7 +15,7 @@ import java.net.URL;
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
 @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
 public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream>> {
-
+   private HttpURLConnection connection;
    /* public interface AsyncResponse {
         void processFinish(Integer output);
     }
@@ -31,7 +31,7 @@ public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream
         try{
             Pair<Integer,InputStream> p;
             URL server = new URL(url[0]);
-            HttpURLConnection connection = (HttpURLConnection) server.openConnection();
+            connection = (HttpURLConnection) server.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
             response_code = connection.getResponseCode();
@@ -43,7 +43,6 @@ public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream
                 p = new Pair<>(response_code,null);
             }
             Log.d("Connection:","fine connessione: "+response_code);
-
             return p;
         }catch (MalformedURLException ex){
             Log.d("CONNECTION:Eccezione","URL exception");
@@ -51,5 +50,9 @@ public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream
             Log.d("CONNECTION:Eccezione","URLConnection exception");
         }
         return null;
+    }
+
+    public void disconnect() {
+        connection.disconnect();
     }
 }

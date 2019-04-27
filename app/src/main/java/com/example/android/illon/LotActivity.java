@@ -44,7 +44,6 @@ public class LotActivity extends Activity {
     private static final String urlBidButton = "http://164.132.47.236/illon/illon_api/bid/create.php";
     private static final String urlPic = "http://164.132.47.236/illon/illon_api/pic/read.php";
     private long millsRimanenti;
-    private CountDownTimer countDownTimer;
     private User u;
     private TextView money,lot,lotName,tRimanente,minBid,yourBid,about;
     private EditText enterBid;
@@ -121,6 +120,7 @@ public class LotActivity extends Activity {
                 Toast.makeText(this,"An error uccurred while creating bid "+read_response.first,Toast.LENGTH_SHORT).show();
                 Toast.makeText(this,""+s[0],Toast.LENGTH_SHORT).show();
             }
+            c.disconnect();
             finish();
             overridePendingTransition(0, 0);
             startActivity(getIntent());
@@ -143,7 +143,8 @@ public class LotActivity extends Activity {
         millsStartTime += 600000;
         millsRimanenti = millsStartTime - Calendar.getInstance().getTime().getTime();
         //millsRimanenti=600000;
-        countDownTimer = new CountDownTimer(millsRimanenti, 1000) {
+        //CountDownTimer countDownTimer =
+        new CountDownTimer(millsRimanenti, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 millsRimanenti = millisUntilFinished;
@@ -227,6 +228,7 @@ public class LotActivity extends Activity {
         } else {
             Toast.makeText(this,"Unable to find Images",Toast.LENGTH_SHORT);
         }
+        c.disconnect();
     }
 
 
@@ -319,7 +321,7 @@ public class LotActivity extends Activity {
             Document file_read;
             try {
                 file_read = db.parse(read_response.second);
-
+                read_conn.disconnect();
                 return parserXMLtoLot(file_read);
 
             } catch (IOException ex) {
@@ -328,6 +330,7 @@ public class LotActivity extends Activity {
                 Log.d("LOT:Eccezione","SAXException");
             }
         }else{
+            read_conn.disconnect();
             Log.d("LOT: Errore","Lettura Lot attuale errata");
             return null;
         }

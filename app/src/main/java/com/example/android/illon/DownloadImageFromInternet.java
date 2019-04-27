@@ -7,6 +7,7 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 public class DownloadImageFromInternet extends AsyncTask<String, Void, Bitmap> {
@@ -20,8 +21,9 @@ public class DownloadImageFromInternet extends AsyncTask<String, Void, Bitmap> {
     protected Bitmap doInBackground(String... urls) {
         String imageURL = "http://164.132.47.236"+urls[0];
         Bitmap bimage = null;
+        InputStream in = null;
         try {
-            InputStream in = new java.net.URL(imageURL).openStream();
+            in = new java.net.URL(imageURL).openStream();
             bimage = BitmapFactory.decodeStream(in);
             in.close();
             Log.d("BIMAGE: ", "doInBackground: "+bimage.toString());

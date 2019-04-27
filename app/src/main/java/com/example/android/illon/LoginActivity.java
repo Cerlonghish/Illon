@@ -98,7 +98,7 @@ public class LoginActivity extends Activity {
             }
 
             button_login.setEnabled(true);
-
+            read_conn.disconnect();
             //lancio l'activity delle aste passandogli l'user
             launchLotActivity(user_login);
         }
@@ -171,9 +171,11 @@ public class LoginActivity extends Activity {
                                 } catch (SAXException ex) {
                                     Log.d("LOGIN:Eccezione","IOException");
                                 }
+                                read_conn.disconnect();
                                 launchLotActivity(user_login);
                             }
                         }
+                        create_conn.disconnect();
 
                     }
                 });
