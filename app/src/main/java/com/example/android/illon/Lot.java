@@ -11,6 +11,7 @@ public class Lot {
     private int value;
     private Date start_time;    //Date = util.Date
     private int id_winner;
+    private String imagePath = null;
 
     public Lot(int id, String name, String about, int min_value, int value, Date start_time, int id_winner) {
         this.id = id;
@@ -20,6 +21,25 @@ public class Lot {
         this.value = value;
         this.start_time = start_time;
         this.id_winner = id_winner;
+    }
+
+    public Lot(int id, String name, String about, int min_value, int value, Date start_time, int id_winner, String path) {
+        this.id = id;
+        this.name = name;
+        this.about = about;
+        this.min_value = min_value;
+        this.value = value;
+        this.start_time = start_time;
+        this.id_winner = id_winner;
+        imagePath = path;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public String getImagePath() {
+        return imagePath;
     }
 
     public int getId() {

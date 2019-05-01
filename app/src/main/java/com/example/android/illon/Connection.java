@@ -16,14 +16,6 @@ import java.net.URL;
 @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
 public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream>> {
    private HttpURLConnection connection;
-   /* public interface AsyncResponse {
-        void processFinish(Integer output);
-    }
-    public AsyncResponse delegate = null;
-
-    public Connection(AsyncResponse delegate){
-        this.delegate = delegate;
-    }*/
 
     @Override
     protected Pair<Integer,InputStream> doInBackground (String [] url){
@@ -52,7 +44,7 @@ public class Connection extends AsyncTask<String, Void, Pair<Integer,InputStream
         return null;
     }
 
-    public void disconnect() {
+    void disconnect() {
         connection.disconnect();
     }
 }

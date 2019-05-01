@@ -73,7 +73,7 @@ public class LotActivity extends Activity {
         lotImages = findViewById(R.id.lotImages);
         containter = lotImages.findViewById(R.id.container);
 
-        money.setText("Money:"+u.getMoney());
+        money.setText("Money: "+u.getMoney());
         userButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -129,8 +129,6 @@ public class LotActivity extends Activity {
             Toast.makeText(this,"Bid too small",Toast.LENGTH_SHORT).show();
         }
     }
-
-
 
     public void setLotView(Lot l){
         illonImage.setImageDrawable(getDrawable(R.drawable.illon_logo));
@@ -206,8 +204,8 @@ public class LotActivity extends Activity {
                 for(int i=0;i<imageUrls.size();i++) {
                     View view = inflater.inflate(R.layout.item_image, containter, false);
                     ImageView iv = view.findViewById(R.id.imageList);
-                    Bitmap difi = new DownloadImageFromInternet(iv).execute(imageUrls.get(i)).get();
-                    if(difi != null && iv!=null) {
+                    Bitmap difi = new DownloadImageFromInternet().execute(imageUrls.get(i)).get();
+                    if(difi != null) {
                         iv.setImageBitmap(difi);
                     } else {
                         Log.d("ERROR", "setLotView: ");
@@ -231,9 +229,6 @@ public class LotActivity extends Activity {
         c.disconnect();
     }
 
-
-
-//----------- OK -----------------------------------------------------------------------------------------------
     private void parserXMLtoImages(ArrayList<String> imageUrls, Document file) {
         NodeList nl = file.getElementsByTagName("pic");
         for(int i=0;i<nl.getLength();i++) {
@@ -285,7 +280,6 @@ public class LotActivity extends Activity {
         intent.putExtra("User", u);
         startActivity(intent);
     }
-
 
     public void updateTimer (long millis) {
         int minutes = (int) (millis/60000);

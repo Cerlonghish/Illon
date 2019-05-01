@@ -1,9 +1,6 @@
 package com.example.android.illon;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,11 +8,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,10 +40,9 @@ public class UserActivity extends AppCompatActivity {
     private Button back;
     private FloatingActionButton fab;
     private String urlReadWon = "http://164.132.47.236/illon/illon_api/user/read_won.php";
-    private ArrayList<String> imageUrls;
     private ArrayList<Lot> lotList;
-    private ArrayList<LotAndImage> lai = new ArrayList<>();
     private int moneySpent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,6 +83,7 @@ public class UserActivity extends AppCompatActivity {
         }catch (InterruptedException ex){
             Log.d("LOT:Eccezione","Interrupted exception");
         }
+
         if(read_response.first == 200) {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = null;
@@ -104,20 +97,11 @@ public class UserActivity extends AppCompatActivity {
                 file_read = db.parse(read_response.second);
                 lotList = new ArrayList<>();
                 parserXMLtoLots(lotList, file_read);
-                //ORA HO TUTTI I LOTTI VINTI DALL'UTENTE --> recupero le immagini, una per lotto
-                imageUrls = new ArrayList<>();
-                getImageUrls();
-                //ORA SI HA L'ARRAYLIST DEGLI URL
+
                 LayoutInflater inflater = LayoutInflater.from(this);
 
-
-                for(int i=0;i<imageUrls.size();i++) {
-                    Log.d("IMMAGINE", "createList: "+imageUrls.get(i));
-                    lai.add(new LotAndImage(lotList.get(i),imageUrls.get(i)));
-                }
-                WonAdapter adapter = new WonAdapter(this,lai);
+                WonAdapter adapter = new WonAdapter(this,lotList);
                 wonList.setAdapter(adapter);
-
 
                 stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t"+lotList.size()+"\nMoney spent:\t"+moneySpent);
             } catch (IOException ex) {
@@ -125,62 +109,29 @@ public class UserActivity extends AppCompatActivity {
             } catch (SAXException ex) {
                 Log.d("LOT:Eccezione","SAXException");
             }
+        } else {
+            Toast.makeText(this,"RESPONSE CODE: "+read_response.first,Toast.LENGTH_SHORT).show();
         }
         c.disconnect();
     }
 
-    private void getImageUrls() {
-        String url = "http://164.132.47.236/illon/illon_api/pic/read.php?pic_lot=";
-        for(int i=0;i<lotList.size();i++) {
-            String s = url+lotList.get(i).getId();
-            Connection c = new Connection();
-            Pair<Integer, InputStream> read_response =  null;
-            try{
-                read_response = c.execute(s).get();
-            }catch (ExecutionException ex){
-                Log.d("LOT:Eccezione","Execution exception");
-            }catch (InterruptedException ex){
-                Log.d("LOT:Eccezione","Interrupted exception");
-            }
-            if(read_response.first==200) {
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = null;
-                try {
-                    db = dbf.newDocumentBuilder();
-                } catch (ParserConfigurationException e) {
-                    Log.d("LOT:Eccezione","ParserConfigurationException");
-                }
-                Document file_read;
-                try {
-                    file_read = db.parse(read_response.second);
-                    NodeList nl = file_read.getElementsByTagName("pic");
-                    Element e = (Element) nl.item(0);
-                    imageUrls.add(e.getElementsByTagName("pic_path").item(0).getTextContent());
-                } catch (IOException ex) {
-                    Log.d("LOT:Eccezione","IOException");
-                } catch (SAXException ex) {
-                    Log.d("LOT:Eccezione","SAXException");
-                }
-            }
-            c.disconnect();
-        }
-    }
-
     public void parserXMLtoLots(ArrayList l, Document file) {
         moneySpent=0;
-        NodeList nl = file.getElementsByTagName("lot");
-        for(int i=0;i<nl.getLength();i++) {
-            Element e = (Element) nl.item(i);
-            int id = Integer.parseInt(e.getElementsByTagName("lot_id").item(0).getTextContent());
-            String name = e.getElementsByTagName("lot_name").item(0).getTextContent();
-            String about = e.getElementsByTagName("lot_about").item(0).getTextContent();
-            int minValue = Integer.parseInt(e.getElementsByTagName("lot_min_value").item(0).getTextContent());
+        NodeList nlLot = file.getElementsByTagName("lot");
+        NodeList nlPic = file.getElementsByTagName("pic");
+        for(int i=0;i<nlLot.getLength();i++) {
+            Element eLot = (Element) nlLot.item(i);
+            Element ePic = (Element) nlPic.item(i);
+            int id = Integer.parseInt(eLot.getElementsByTagName("lot_id").item(0).getTextContent());
+            String name = eLot.getElementsByTagName("lot_name").item(0).getTextContent();
+            String about = eLot.getElementsByTagName("lot_about").item(0).getTextContent();
+            int minValue = Integer.parseInt(eLot.getElementsByTagName("lot_min_value").item(0).getTextContent());
             int value = -1;
-            if(!e.getElementsByTagName("lot_value").item(0).getTextContent().equals("NULL")) {
-                value = Integer.parseInt(e.getElementsByTagName("lot_value").item(0).getTextContent());
+            if(!eLot.getElementsByTagName("lot_value").item(0).getTextContent().equals("NULL")) {
+                value = Integer.parseInt(eLot.getElementsByTagName("lot_value").item(0).getTextContent());
                 moneySpent+=value;
             }
-            Node dateTag = e.getElementsByTagName("lot_start_time").item(0);
+            Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
             DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALIAN);
             Date lot_start_time = null;
             try {
@@ -188,13 +139,13 @@ public class UserActivity extends AppCompatActivity {
             } catch (ParseException ex) {
                 Log.d("LOT:Eccezione","ParseException");
             }
-            Node winnerTag = e.getElementsByTagName("lot_winner").item(0);
+            Node winnerTag = eLot.getElementsByTagName("lot_winner").item(0);
             int lot_winner = Integer.parseInt(winnerTag.getTextContent());
-            l.add(new Lot(id,name,about,minValue,value,lot_start_time,lot_winner));
+            String imagePath = ePic.getElementsByTagName("pic_path").item(0).getTextContent();
+            l.add(new Lot(id,name,about,minValue,value,lot_start_time,lot_winner,imagePath));
         }
     }
 
-    //------------------------- OK -----------------------------------------
     public void launchLoginActivity() {
         Log.d("USER", "Torno in LOGIN");
         Intent intent = new Intent(this, LoginActivity.class);
