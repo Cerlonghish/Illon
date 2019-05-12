@@ -16,6 +16,13 @@ public class User implements Serializable {
         myBid = -1;
     }
 
+    public User(int id, String name, int money, int bid){
+        this.id = id;
+        this.name = name;
+        this.money = money;
+        myBid = bid;
+    }
+
     public int getId() {
         return id;
     }

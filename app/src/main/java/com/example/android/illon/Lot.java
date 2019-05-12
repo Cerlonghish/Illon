@@ -1,9 +1,13 @@
 package com.example.android.illon;
 
+import android.graphics.Bitmap;
+
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 
-public class Lot {
+public class Lot implements Serializable {
     private int id;
     private String name;
     private String about;
@@ -12,6 +16,7 @@ public class Lot {
     private Date start_time;    //Date = util.Date
     private int id_winner;
     private String imagePath = null;
+    private ArrayList<ProxyBitmap> images = null;
 
     public Lot(int id, String name, String about, int min_value, int value, Date start_time, int id_winner) {
         this.id = id;
@@ -129,4 +134,20 @@ public class Lot {
                 ", id_user=" + id_winner +
                 '}';
     }
+
+    public void setImages(ArrayList<Bitmap> images) {
+        this.images = new ArrayList<>();
+        for (int i=0;i<images.size();i++) {
+            this.images.add(new ProxyBitmap(images.get(i)));
+        }
+    }
+
+    public ArrayList<Bitmap> getImages() {
+        ArrayList<Bitmap> imgs = new ArrayList<>();
+        for(int i=0;i<images.size();i++) {
+            imgs.add(images.get(i).getBitmap());
+        }
+        return imgs;
+    }
+
 }

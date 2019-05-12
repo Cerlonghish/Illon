@@ -19,8 +19,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -70,14 +77,17 @@ public class UserActivity extends AppCompatActivity {
         });
 
         user_name.setText(u.getName());
-        createList();
+        createCachedList();
     }
 
     private void createList() {
         Connection c = new Connection();
+        String[] s = new String[2];
+        s[0] = urlReadWon;
+        s[1] = "user/read_won.php";
         Pair<Integer, InputStream> read_response =  null;
         try{
-            read_response = c.execute(urlReadWon).get();
+            read_response = c.execute(s).get();
         }catch (ExecutionException ex){
             Log.d("LOT:Eccezione","Execution exception");
         }catch (InterruptedException ex){
@@ -98,8 +108,6 @@ public class UserActivity extends AppCompatActivity {
                 lotList = new ArrayList<>();
                 parserXMLtoLots(lotList, file_read);
 
-                LayoutInflater inflater = LayoutInflater.from(this);
-
                 WonAdapter adapter = new WonAdapter(this,lotList);
                 wonList.setAdapter(adapter);
 
@@ -110,9 +118,20 @@ public class UserActivity extends AppCompatActivity {
                 Log.d("LOT:Eccezione","SAXException");
             }
         } else {
-            Toast.makeText(this,"RESPONSE CODE: "+read_response.first,Toast.LENGTH_SHORT).show();
+            stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t0\nMoney spent:\t"+moneySpent);
         }
         c.disconnect();
+    }
+
+    public void createCachedList() {
+        retriveList();
+        if(lotList==null) {
+            createList();
+        } else {
+            WonAdapter adapter = new WonAdapter(this,lotList);
+            wonList.setAdapter(adapter);
+            stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t"+lotList.size()+"\nMoney spent:\t"+moneySpent);
+        }
     }
 
     public void parserXMLtoLots(ArrayList l, Document file) {
@@ -147,12 +166,55 @@ public class UserActivity extends AppCompatActivity {
     }
 
     public void launchLoginActivity() {
+        cacheList();
         Log.d("USER", "Torno in LOGIN");
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
     }
 
+    private void cacheList() {
+        File dir = getCacheDir();
+        File fileLot = new File(dir.getAbsolutePath(),"fileList.txt");
+        FileOutputStream fOut = null;
+        try {
+            fOut = new FileOutputStream(fileLot);
+            ObjectOutputStream oos = new ObjectOutputStream(fOut);
+            oos.writeInt(u.getId());
+            oos.writeObject(lotList);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void retriveList() {
+        File dir = getCacheDir();
+        File file = new File(dir,"fileList.txt");
+        if(file.exists()) {
+            try {
+                FileInputStream fIn = new FileInputStream(file);
+                ObjectInputStream ois = new ObjectInputStream(fIn);
+                int id = ois.readInt();
+                if(id == u.getId()) {
+                    lotList = (ArrayList<Lot>) ois.readObject();
+                } else {
+                    lotList = null;
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
+            lotList=null;
+        }
+    }
+
     public void launchLotActivity (User u) {
+        cacheList();
         Log.d("USER", "APRO LAYOUT DEL LOTTO");
         Intent intent = new Intent(this, LotActivity.class);
         intent.putExtra("User", u);

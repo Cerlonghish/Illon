@@ -17,6 +17,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,16 +25,21 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class LoginActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/user/";
-    private static final String api_read_one = url + "read_one.php";
+    private static final String api_read_one = url + "read_one_name.php";
     private static final String api_create = url + "create.php";
     private String username;
     private String read_username;
     private String create_username;
     public boolean creation = false;
     private Pair <Integer, InputStream> create_response;
-    private String[] s = new String[1];
+    private String[] s = new String[2];
     private Pair<Integer, InputStream> read_response;
 
+    /**
+     * l'attributo l viene salvato se esiste
+     * richiama connect quando si preme su login
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +53,11 @@ public class LoginActivity extends Activity {
         });
     }
 
+    /**
+     * disabilita il bottone di login, prova la connessione a read_one con l'username inserito
+     * se la risposta http non è 200, lo crea (DA SISTEMARE)
+     * se la risposta http è 200, creo l'oggetto user parsando l'xml della risposta http, passo all'activity "LotActivity"
+     */
     public void connect() {
         Button button_login = findViewById(R.id.button_login);
         button_login.setEnabled(false); //disabilito il bottone
@@ -58,6 +69,7 @@ public class LoginActivity extends Activity {
 
         //prima connessione: verifica presenza username nel database
         s[0] = read_username;
+        s[1] = "user/read_one_name.php";
         Connection read_conn = new Connection();
         read_response = null;
         try{
@@ -104,7 +116,11 @@ public class LoginActivity extends Activity {
         }
     }
 
-    //creo un alert per chiedere se voglio creare l'username (se non esiste)
+    /**
+     * con un dialog si chiede all'utente se si vuole creare veramente un nuovo account con l'username inserito
+     * se si preme si --> connessione http per creare l'account e connessione per leggerne i dati e parsarli
+     * quindi passo all'activity "LotActivity"
+     */
     private void userCreation(){
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle("");
@@ -118,7 +134,7 @@ public class LoginActivity extends Activity {
                         // ***da aggiungere il token (Tene) ***
                         create_username = api_create + "?user_name=" + username;
                         s[0] = create_username;
-
+                        s[1] = "user/create.php";
                         //connessione per creare l'user nel database
                         Connection create_conn = new Connection();
                         create_response = null;
@@ -138,6 +154,7 @@ public class LoginActivity extends Activity {
                             //ultima connessione per leggere i dati dell'utente dopo averli creati
                             Connection read_conn = new Connection();
                             s[0] = read_username;
+                            s[1] = "user/read_one_name.php";
                             try{
                                 read_response = read_conn.execute(s).get();
                             }catch (ExecutionException ex){
@@ -190,6 +207,11 @@ public class LoginActivity extends Activity {
         alertDialog.show();
     }
 
+    /**
+     *
+     * @param file xml (dato dall'inputstream della connessione http
+     * @return oggetto utente parsato
+     */
     private User parserXMLtoUser(Document file){
         Node user = file.getElementsByTagName("user").item(0);
         Element eUser = (Element)user;
@@ -200,9 +222,18 @@ public class LoginActivity extends Activity {
         Node moneyTag = eUser.getElementsByTagName("user_money").item(0);
         int user_money = Integer.parseInt(moneyTag.getTextContent());
 
-        return new User(user_id, user_name, user_money);
+        if(file.getElementsByTagName("bid").getLength()>0) {
+            int bid = Integer.parseInt(file.getElementsByTagName("bid_value").item(0).getTextContent());
+            return new User(user_id, user_name, user_money, bid);
+        } else {
+            return new User(user_id, user_name, user_money);
+        }
     }
 
+    /**
+     * apre l'activity LotActivity passando l'oggetto utente e il lotto (se presente) (DA MODIFICARE)
+     * @param u utente che passo all'activity
+     */
     public void launchLotActivity(User u) {
         Log.d("LOGIN", "APRO LAYOUT DEL LOTTO");
         Intent intent = new Intent(this, LotActivity.class);

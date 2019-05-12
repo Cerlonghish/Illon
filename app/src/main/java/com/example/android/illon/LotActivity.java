@@ -1,6 +1,8 @@
 package com.example.android.illon;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.CountDownTimer;
@@ -15,6 +17,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,8 +27,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -51,14 +61,25 @@ public class LotActivity extends Activity {
     private ImageButton userButton;
     private ImageView illonImage;
     private HorizontalScrollView lotImages;
-    private  Lot current_lot;
+    private Lot current_lot;
     private LinearLayout containter;
+    private String provenienza;
 
+    /**
+     * si salva tutti gli elementi del layout
+     * prende l'utente dalla precedente activity
+     * pulsante che chiama launchUserActivity
+     * pulsante che invia la bid
+     * currentlot DA SISTEMARE
+     * chiama setLotView
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.current_lot);
         u = (User) getIntent().getSerializableExtra("User");
+        current_lot = (Lot) getIntent().getSerializableExtra("Lot");
         money = findViewById(R.id.money);
         lot =findViewById(R.id.lot);
         lotName = findViewById(R.id.lotName);
@@ -77,7 +98,7 @@ public class LotActivity extends Activity {
         userButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                launchLotActivity(u);
+                launchUserActivity(u);
             }
         });
         bidButton.setOnClickListener(
@@ -89,13 +110,23 @@ public class LotActivity extends Activity {
                 }
         );
 
-        current_lot = setLot();
+        reriveLot();
+        if(current_lot==null || System.currentTimeMillis()-current_lot.getStart_time().getTime()>600000) {
+            Log.d("BO", "onCreate: SETLOT");
+            current_lot = setLot();
+        }
 
         setLotView(current_lot);
+        Log.d("IDLOTTO", "onCreate: "+current_lot.getId());
+        Log.d("IDUTENTE", "onCreate: "+u.getId());
     }
 
+    /**
+     * prende l'offerta e se è accettabile (>bestBid e  < moneyUtente) fa la richiesta http
+     * ricarica l'activity terminata la connessione
+     */
     private void sendBid() {
-        String s[] = new String[1];
+        String s[] = new String[2];
 
         Pair <Integer, InputStream> read_response =  null;
         //prende il numero
@@ -106,6 +137,7 @@ public class LotActivity extends Activity {
         if((current_lot.getValue() != -1 ? offerta>current_lot.getValue() : offerta>=current_lot.getMin_value()) && u.getMoney()>=offerta) {
             Connection c = new Connection();
             s[0] = urlBidButton+"?bid_user="+u.getId()+"&bid_lot="+current_lot.getId()+"&bid_value="+offerta;
+            s[1] = "bid/create.php";
             try{
                 read_response = c.execute(s).get();
             }catch (ExecutionException ex){
@@ -116,20 +148,90 @@ public class LotActivity extends Activity {
             if(read_response.first==201) {
                 Toast.makeText(this,"Bid created successfully",Toast.LENGTH_SHORT).show();
                 u.setMyBid(offerta);
+                current_lot.setValue(offerta);
+                minBid.setText("Min bid: " + current_lot.getValue());
+                yourBid.setText("Your bid: "+current_lot.getValue());
+            } else if(read_response.first==200) {
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = null;
+                try {
+                    db = dbf.newDocumentBuilder();
+                } catch (ParserConfigurationException e) {
+                    Log.d("LOT:Eccezione","ParserConfigurationException");
+                }
+                Document file_read;
+                try {
+                    Toast.makeText(this,"Soomebody already made a better or equivalent bid",Toast.LENGTH_SHORT).show();
+                    file_read = db.parse(read_response.second);
+
+                    int v = Integer.parseInt(file_read.getElementsByTagName("bid_value").item(0).getTextContent());
+                    current_lot.setValue(v);
+                    minBid.setText("Min bid: "+v);
+                } catch (IOException ex) {
+                    Log.d("LOT:Eccezione","IOException");
+                } catch (SAXException ex) {
+                    Log.d("LOT:Eccezione","SAXException");
+                }
             } else {
                 Toast.makeText(this,"An error uccurred while creating bid "+read_response.first,Toast.LENGTH_SHORT).show();
                 Toast.makeText(this,""+s[0],Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(this, LotActivity.class);
+                intent.putExtra("User", u);
+                finish();
+                overridePendingTransition(0, 0);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
             }
             c.disconnect();
-            finish();
-            overridePendingTransition(0, 0);
-            startActivity(getIntent());
-            overridePendingTransition(0, 0);
         } else  {
             Toast.makeText(this,"Bid too small",Toast.LENGTH_SHORT).show();
         }
     }
 
+    private void cacheLot() {
+        //----------caching--------------------
+        File dir = getCacheDir();
+        File fileLot = new File(dir.getAbsolutePath(),"fileLot.txt");
+        FileOutputStream fOut = null;
+        try {
+            fOut = new FileOutputStream(fileLot);
+            ObjectOutputStream oos = new ObjectOutputStream(fOut);
+            oos.writeObject(current_lot);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //--------------------------------------
+    }
+
+    private void reriveLot() {
+        File dir = getCacheDir();
+        File file = new File(dir,"fileLot.txt");
+        if(file.exists()) {
+            try {
+                FileInputStream fIn = new FileInputStream(file);
+                ObjectInputStream ois = new ObjectInputStream(fIn);
+                current_lot = (Lot) ois.readObject();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
+            current_lot = setLot();
+        }
+    }
+
+    /**
+     * imposta la schermata
+     * es. visualizza i soldi dell'utente, il countDownTimer (DA SISTEMARE)
+     * YOURBID DA SISTEMARE
+     * scarica e mostra le immagini
+     * @param l
+     */
     public void setLotView(Lot l){
         illonImage.setImageDrawable(getDrawable(R.drawable.illon_logo));
         //ID E NOME DEL LOTTO
@@ -139,7 +241,7 @@ public class LotActivity extends Activity {
         //tRimanente
         long millsStartTime = l.getStart_time().getTime();
         millsStartTime += 600000;
-        millsRimanenti = millsStartTime - Calendar.getInstance().getTime().getTime();
+        millsRimanenti = millsStartTime - Calendar.getInstance().getTime().getTime() + 2000;
         //millsRimanenti=600000;
         //CountDownTimer countDownTimer =
         new CountDownTimer(millsRimanenti, 1000) {
@@ -152,6 +254,7 @@ public class LotActivity extends Activity {
             @Override
             public void onFinish() {
                 u.setMyBid(-1);
+                dialogFine();
             }
         }.start();
 
@@ -173,9 +276,67 @@ public class LotActivity extends Activity {
             yourBid.setText("Your bid: "+u.getMyBid());
 
         //IMMAGINI
-        String s[] = new String[1];
-        s[0] = urlPic+"?pic_lot="+l.getId();
+        ArrayList<Bitmap> imgs = l.getImages();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for(int i=0;i<imgs.size();i++) {
+            View view = inflater.inflate(R.layout.item_image, containter, false);
+            ImageView iv = view.findViewById(R.id.imageList);
+            iv.setPadding(0,0,25,0);
+            if(imgs.get(i) != null) {
+                iv.setImageBitmap(imgs.get(i));
+            } else {
+                Log.d("ERROR", "setLotView: ");
+            }
+            containter.addView(view);
+        }
+    }
+
+    /**
+     * dialog che dovrebbe apparire alla fine del countDownTimerm chiama getNomeVincitore per sapere chi ha vinto l'asta
+     * premuto su ok si ricarica l'activity
+     * DA SISTEMARE (Crasha al momento di aprire il dialog)
+     */
+    private void dialogFine() {
+        String nomeUtenteVincitore = getNomeVincitore();
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                current_lot = null;
+                finish();
+                overridePendingTransition(0, 0);
+                startActivity(getIntent());
+                overridePendingTransition(0, 0);
+            }
+        });
+        alertDialog.setTitle("L'asta è terminata!");
+        alertDialog.setMessage("Il vincitore è l'utente "+nomeUtenteVincitore);
+        alertDialog.setButton(
+                DialogInterface.BUTTON_NEUTRAL,
+                "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        current_lot = null;
+                        finish();
+                        overridePendingTransition(0, 0);
+                        startActivity(getIntent());
+                        overridePendingTransition(0, 0);
+                    }
+                });
+        alertDialog.show();
+    }
+
+    /**
+     * richiesta http per ottenere il lotto corrente, per prendere il lot_winner (id)
+     * richiesta http per ottenere il nome del vincitore dal suo id
+     * DA SISTEMARE
+     * @return il nome del vincitore
+     */
+    private String getNomeVincitore() {
         Connection c = new Connection();
+        String[] s = new String[2];
+        s[0] = "http://164.132.47.236/illon/illon_api/lot/read_one.php?lot_id="+current_lot.getId();
+        s[1] = "lot/read_one.php";
         Pair <Integer, InputStream> read_response =  null;
         try{
             read_response = c.execute(s).get();
@@ -184,8 +345,88 @@ public class LotActivity extends Activity {
         }catch (InterruptedException ex){
             Log.d("LOT:Eccezione","Interrupted exception");
         }
-        ArrayList<String> imageUrls =new ArrayList();
         if(read_response.first == 200) {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = null;
+            try {
+                db = dbf.newDocumentBuilder();
+            } catch (ParserConfigurationException e) {
+                Log.d("LOT:Eccezione","ParserConfigurationException");
+            }
+            Document file_read;
+            Document file_read_name;
+            try {
+                file_read = db.parse(read_response.second);
+
+                int id = Integer.parseInt(file_read.getElementsByTagName("lot_winner").item(0).getTextContent());
+                Pair <Integer, InputStream> read_response_name =  null;
+                Connection c2 = new Connection();
+                s[0] = "http://164.132.47.236/illon/illon_api/user/read_one_id.php?user_id="+id;
+                s[1] = "user/read_one_id.php";
+                read_response_name = c2.execute(s).get();
+                if(read_response_name.first==200) {
+                    file_read_name = db.parse(read_response_name.second);
+                    return file_read_name.getElementsByTagName("user_name").item(0).getTextContent();
+                }
+            } catch (IOException ex) {
+                Log.d("LOT:Eccezione","IOException");
+            } catch (SAXException ex) {
+                Log.d("LOT:Eccezione","SAXException");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * apre acivity UserActivity passandogli oggetti USER E LOTTO
+     * @param u
+     */
+    public void launchUserActivity(User u) {
+        cacheLot();
+        Log.d("LOT", "APRO LAYOUT USER");
+        Intent intent = new Intent(this, UserActivity.class);
+        intent.putExtra("User", u);
+        startActivity(intent);
+    }
+
+    /**
+     * aggiorna la textview del countDown
+     * @param millis
+     */
+    public void updateTimer (long millis) {
+        int minutes = (int) (millis/60000);
+        int seconds = (int) (millis%60000/1000);
+        String timeLeftText=minutes+":";
+        if(seconds<10) timeLeftText+="0";
+        timeLeftText += seconds;
+        tRimanente.setText(timeLeftText);
+    }
+
+    /**
+     * crea oggetto lotto se non è recuperabile dall'intent
+     * @return oggetto Lot
+     */
+    public Lot setLot(){
+        Lot l;
+        String s[] = new String[2];
+        s[0] = url;
+        s[1] = "lot/read_current.php";
+        Pair <Integer, InputStream> read_response =  null;
+
+        Connection read_conn = new Connection();
+        try{
+            read_response = read_conn.execute(s).get();
+        }catch (ExecutionException ex){
+            Log.d("LOT:Eccezione","Execution exception");
+        }catch (InterruptedException ex){
+            Log.d("LOT:Eccezione","Interrupted exception");
+        }
+
+        if(read_response.first == 200){
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = null;
             try {
@@ -196,48 +437,28 @@ public class LotActivity extends Activity {
             Document file_read;
             try {
                 file_read = db.parse(read_response.second);
-                parserXMLtoImages(imageUrls, file_read);
-                //ORA SI HA L'ARRAYLIST DEGLI URL
-                LayoutInflater inflater = LayoutInflater.from(this);
-
-
-                for(int i=0;i<imageUrls.size();i++) {
-                    View view = inflater.inflate(R.layout.item_image, containter, false);
-                    ImageView iv = view.findViewById(R.id.imageList);
-                    Bitmap difi = new DownloadImageFromInternet().execute(imageUrls.get(i)).get();
-                    if(difi != null) {
-                        iv.setImageBitmap(difi);
-                    } else {
-                        Log.d("ERROR", "setLotView: ");
-                    }
-                    containter.addView(view);
-                }
-
-
+                read_conn.disconnect();
+                l = parserXMLtoLot(file_read);
+                l.setImages(downloadImages(l.getId()));
+                return l;
             } catch (IOException ex) {
                 Log.d("LOT:Eccezione","IOException");
             } catch (SAXException ex) {
                 Log.d("LOT:Eccezione","SAXException");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
             }
-        } else {
-            Toast.makeText(this,"Unable to find Images",Toast.LENGTH_SHORT);
+        }else{
+            read_conn.disconnect();
+            Log.d("LOT: Errore","Lettura Lot attuale errata");
+            return null;
         }
-        c.disconnect();
+        return null;
     }
 
-    private void parserXMLtoImages(ArrayList<String> imageUrls, Document file) {
-        NodeList nl = file.getElementsByTagName("pic");
-        for(int i=0;i<nl.getLength();i++) {
-            Element e = (Element) nl.item(i);
-            String p = e.getElementsByTagName("pic_path").item(0).getTextContent();
-            imageUrls.add(p);
-        }
-    }
-
+    /**
+     * parsa l'xml per creare l'oggetto lotto
+     * @param file
+     * @return Lot
+     */
     private Lot parserXMLtoLot(Document file){
         Node user = file.getElementsByTagName("lot").item(0);
         Element eLot = (Element)user;
@@ -274,60 +495,67 @@ public class LotActivity extends Activity {
         return l;
     }
 
-    public void launchLotActivity(User u) {
-        Log.d("LOT", "APRO LAYOUT USER");
-        Intent intent = new Intent(this, UserActivity.class);
-        intent.putExtra("User", u);
-        startActivity(intent);
-    }
-
-    public void updateTimer (long millis) {
-        int minutes = (int) (millis/60000);
-        int seconds = (int) (millis%60000/1000);
-        String timeLeftText=minutes+":";
-        if(seconds<10) timeLeftText+="0";
-        timeLeftText += seconds;
-        tRimanente.setText(timeLeftText);
-    }
-
-    public Lot setLot(){
-        String s[] = new String[1];
-        s[0] = url;
+    /**
+     * richiesta http per ricevere le path delle immagini del lotto poi scarico ogni immagine
+     * @param id
+     * @return arrayList di Bitmap delle immagini scaricate
+     */
+    public ArrayList<Bitmap> downloadImages(int id) {
+        //IMMAGINI
+        ArrayList<Bitmap> imgs = new ArrayList<>();
+        ArrayList<String> imageUrls =new ArrayList();
+        String s[] = new String[2];
+        s[0] = urlPic+"?pic_lot="+id;
+        s[1] = "pic/read.php";
+        Connection c = new Connection();
         Pair <Integer, InputStream> read_response =  null;
-
-        Connection read_conn = new Connection();
         try{
-            read_response = read_conn.execute(s).get();
+            read_response = c.execute(s).get();
         }catch (ExecutionException ex){
             Log.d("LOT:Eccezione","Execution exception");
         }catch (InterruptedException ex){
             Log.d("LOT:Eccezione","Interrupted exception");
         }
 
-        if(read_response.first == 200){
+        if(read_response.first == 200) {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = null;
             try {
                 db = dbf.newDocumentBuilder();
             } catch (ParserConfigurationException e) {
-                Log.d("LOT:Eccezione","ParserConfigurationException");
+                Log.d("LOT:Eccezione", "ParserConfigurationException");
             }
             Document file_read;
             try {
                 file_read = db.parse(read_response.second);
-                read_conn.disconnect();
-                return parserXMLtoLot(file_read);
-
+                parserXMLtoImages(imageUrls, file_read);
+                for (int i = 0; i < imageUrls.size(); i++) {
+                    imgs.add(new DownloadImageFromInternet().execute(imageUrls.get(i)).get());
+                }
             } catch (IOException ex) {
-                Log.d("LOT:Eccezione","IOException");
+                Log.d("LOT:Eccezione", "IOException");
             } catch (SAXException ex) {
-                Log.d("LOT:Eccezione","SAXException");
+                Log.d("LOT:Eccezione", "SAXException");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
-        }else{
-            read_conn.disconnect();
-            Log.d("LOT: Errore","Lettura Lot attuale errata");
-            return null;
         }
-        return null;
+        return imgs;
+    }
+
+    /**
+     *
+     * @param imageUrls document path
+     * @param file
+     */
+    private void parserXMLtoImages(ArrayList<String> imageUrls, Document file) {
+        NodeList nl = file.getElementsByTagName("pic");
+        for(int i=0;i<nl.getLength();i++) {
+            Element e = (Element) nl.item(i);
+            String p = e.getElementsByTagName("pic_path").item(0).getTextContent();
+            imageUrls.add(p);
+        }
     }
 }
