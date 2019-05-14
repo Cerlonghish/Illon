@@ -66,6 +66,11 @@ public class UserFactory {
         return null;
     }
 
+    /**
+     *
+     * @param file Document XML
+     * @return User
+     */
     private static User parserXMLtoUser (Document file){
         Node user = file.getElementsByTagName("user").item(0);
         Element eUser = (Element) user;
