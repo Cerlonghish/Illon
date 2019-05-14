@@ -45,6 +45,9 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         Button button_login =  findViewById(R.id.button_login);
+        if(getIntent().getStringExtra("Provenienza")==null) {
+            DeleteCacheDir.deleteDir(getCacheDir());
+        }
         button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -240,4 +243,7 @@ public class LoginActivity extends Activity {
         intent.putExtra("User", u);
         startActivity(intent);
     }
+
+    @Override
+    public void onBackPressed() {}
 }

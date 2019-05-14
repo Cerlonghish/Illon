@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/verde_chiaro">
+    >
 
-    <Button
+    <ImageButton
         android:id="@+id/back"
         android:layout_width="63dp"
         android:layout_height="63dp"
@@ -22,15 +22,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@id/back"
+        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="0dp"
-        android:layout_marginEnd="0dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="-1dp"
         android:layout_toEndOf="@+id/back"
         android:fontFamily="sans-serif"
         android:text="USERNAME"
         android:textAlignment="center"
         android:textColor="@android:color/black"
-        android:textSize="25sp"
+        android:textSize="35sp"
         android:textStyle="bold|italic" />
 
     <TextView
@@ -63,11 +65,10 @@
         android:layout_below="@id/bidwon"
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
-        android:background="@color/verde_chiaro"
-        android:divider="@color/verde_chiaro"
         android:dividerHeight="10sp"
-
         android:layout_centerHorizontal="true"
+        android:background="@color/cardview_light_background"
+        android:divider="@color/cardview_light_background"
         />
 
 

@@ -110,9 +110,11 @@ public class LotActivity extends Activity {
                 }
         );
 
-        reriveLot();
+        retriveLot();
         if(current_lot==null || System.currentTimeMillis()-current_lot.getStart_time().getTime()>600000) {
             Log.d("BO", "onCreate: SETLOT");
+            DeleteCacheDir.deleteDir(getCacheDir());
+            u=UserFactory.getUser(u.getName());
             current_lot = setLot();
         }
 
@@ -205,7 +207,7 @@ public class LotActivity extends Activity {
         //--------------------------------------
     }
 
-    private void reriveLot() {
+    private void retriveLot() {
         File dir = getCacheDir();
         File file = new File(dir,"fileLot.txt");
         if(file.exists()) {
@@ -221,7 +223,7 @@ public class LotActivity extends Activity {
                 e.printStackTrace();
             }
         } else {
-            current_lot = setLot();
+            current_lot = null;
         }
     }
 
@@ -253,7 +255,10 @@ public class LotActivity extends Activity {
 
             @Override
             public void onFinish() {
-                u.setMyBid(-1);
+                u=UserFactory.getUser(u.getName());
+                money.setText("Money: "+u.getMoney());
+                yourBid.setText("Your bid: X");
+                DeleteCacheDir.deleteDir(getCacheDir());
                 dialogFine();
             }
         }.start();
@@ -263,9 +268,13 @@ public class LotActivity extends Activity {
 
         //MINBID
         if(l.getValue()!=-1) {
-            minBid.setText("Min bid: " + l.getValue());
+            if(u.getMyBid()>l.getValue()) {
+                minBid.setText("Min bid: " + u.getMyBid());
+            } else minBid.setText("Min bid: " + l.getValue());
         } else {
-            minBid.setText("Min bid: " + l.getMin_value());
+            if(u.getMyBid()>l.getMin_value()) {
+                minBid.setText("Min bid: " + u.getMyBid());
+            } else minBid.setText("Min bid: " + l.getMin_value());
         }
         //deve essere null finchè non viene fatta la prima bid
         //yourBid.setText("Your bid: "+l.getValue());
@@ -302,24 +311,28 @@ public class LotActivity extends Activity {
         alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
+                Intent intent = getIntent();
+                intent.putExtra("User", u);
                 current_lot = null;
                 finish();
                 overridePendingTransition(0, 0);
-                startActivity(getIntent());
+                startActivity(intent);
                 overridePendingTransition(0, 0);
             }
         });
         alertDialog.setTitle("L'asta è terminata!");
-        alertDialog.setMessage("Il vincitore è l'utente "+nomeUtenteVincitore);
+        alertDialog.setMessage(nomeUtenteVincitore);
         alertDialog.setButton(
                 DialogInterface.BUTTON_NEUTRAL,
                 "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = getIntent();
+                        intent.putExtra("User", u);
                         current_lot = null;
                         finish();
                         overridePendingTransition(0, 0);
-                        startActivity(getIntent());
+                        startActivity(intent);
                         overridePendingTransition(0, 0);
                     }
                 });
@@ -357,16 +370,19 @@ public class LotActivity extends Activity {
             Document file_read_name;
             try {
                 file_read = db.parse(read_response.second);
-
-                int id = Integer.parseInt(file_read.getElementsByTagName("lot_winner").item(0).getTextContent());
-                Pair <Integer, InputStream> read_response_name =  null;
-                Connection c2 = new Connection();
-                s[0] = "http://164.132.47.236/illon/illon_api/user/read_one_id.php?user_id="+id;
-                s[1] = "user/read_one_id.php";
-                read_response_name = c2.execute(s).get();
-                if(read_response_name.first==200) {
-                    file_read_name = db.parse(read_response_name.second);
-                    return file_read_name.getElementsByTagName("user_name").item(0).getTextContent();
+                String winner = file_read.getElementsByTagName("lot_winner").item(0).getTextContent();
+                if(winner.equals("NULL")) {
+                    return "Nessun vincitore";
+                } else  {
+                    Pair <Integer, InputStream> read_response_name =  null;
+                    Connection c2 = new Connection();
+                    s[0] = "http://164.132.47.236/illon/illon_api/user/read_one_id.php?user_id="+winner;
+                    s[1] = "user/read_one_id.php";
+                    read_response_name = c2.execute(s).get();
+                    if(read_response_name.first==200) {
+                        file_read_name = db.parse(read_response_name.second);
+                        return "Il vincitore è "+file_read_name.getElementsByTagName("user_name").item(0).getTextContent();
+                    }
                 }
             } catch (IOException ex) {
                 Log.d("LOT:Eccezione","IOException");

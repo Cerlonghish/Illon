@@ -9,6 +9,7 @@ import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,7 +45,7 @@ public class UserActivity extends AppCompatActivity {
     private User u;
     private TextView user_name,stats;
     private ListView wonList;
-    private Button back;
+    private ImageButton back;
     private FloatingActionButton fab;
     private String urlReadWon = "http://164.132.47.236/illon/illon_api/user/read_won.php";
     private ArrayList<Lot> lotList;
@@ -107,18 +108,21 @@ public class UserActivity extends AppCompatActivity {
                 file_read = db.parse(read_response.second);
                 lotList = new ArrayList<>();
                 parserXMLtoLots(lotList, file_read);
-
+                u.setMoneySpent(0);
+                for(int i=0;i<lotList.size();i++) {
+                    u.setMoneySpent(u.getMoneySpent()+lotList.get(i).getValue());
+                }
                 WonAdapter adapter = new WonAdapter(this,lotList);
                 wonList.setAdapter(adapter);
 
-                stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t"+lotList.size()+"\nMoney spent:\t"+moneySpent);
+                stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t"+lotList.size()+"\nMoney spent:\t"+u.getMoneySpent());
             } catch (IOException ex) {
                 Log.d("LOT:Eccezione","IOException");
             } catch (SAXException ex) {
                 Log.d("LOT:Eccezione","SAXException");
             }
         } else {
-            stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t0\nMoney spent:\t"+moneySpent);
+            stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t0\nMoney spent:\t0");
         }
         c.disconnect();
     }
@@ -128,14 +132,17 @@ public class UserActivity extends AppCompatActivity {
         if(lotList==null) {
             createList();
         } else {
+            u.setMoneySpent(0);
+            for(int i=0;i<lotList.size();i++) {
+                u.setMoneySpent(u.getMoneySpent()+lotList.get(i).getValue());
+            }
             WonAdapter adapter = new WonAdapter(this,lotList);
             wonList.setAdapter(adapter);
-            stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t"+lotList.size()+"\nMoney spent:\t"+moneySpent);
+            stats.setText("Money:\t"+u.getMoney()+"\nBid won:\t"+lotList.size()+"\nMoney spent:\t"+u.getMoneySpent());
         }
     }
 
     public void parserXMLtoLots(ArrayList l, Document file) {
-        moneySpent=0;
         NodeList nlLot = file.getElementsByTagName("lot");
         NodeList nlPic = file.getElementsByTagName("pic");
         for(int i=0;i<nlLot.getLength();i++) {
@@ -148,7 +155,6 @@ public class UserActivity extends AppCompatActivity {
             int value = -1;
             if(!eLot.getElementsByTagName("lot_value").item(0).getTextContent().equals("NULL")) {
                 value = Integer.parseInt(eLot.getElementsByTagName("lot_value").item(0).getTextContent());
-                moneySpent+=value;
             }
             Node dateTag = eLot.getElementsByTagName("lot_start_time").item(0);
             DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALIAN);
@@ -169,6 +175,7 @@ public class UserActivity extends AppCompatActivity {
         cacheList();
         Log.d("USER", "Torno in LOGIN");
         Intent intent = new Intent(this, LoginActivity.class);
+        intent.putExtra("Provenienza","User");
         startActivity(intent);
     }
 
