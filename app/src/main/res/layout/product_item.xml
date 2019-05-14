@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_gravity="center_horizontal"
     android:layout_height="95dp"
+    android:layout_gravity="center_horizontal"
     android:background="@drawable/back_item">
 
     <!--    <ImageView
@@ -76,8 +76,8 @@
         android:layout_height="85dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="5dp"
+        android:src="@drawable/illon_logo"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:src="@drawable/illon_logo" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
