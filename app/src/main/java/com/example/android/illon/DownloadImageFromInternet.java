@@ -16,7 +16,7 @@ public class DownloadImageFromInternet extends AsyncTask<String, Void, Bitmap> {
             in = new java.net.URL(imageURL).openStream();
             bimage = BitmapFactory.decodeStream(in);
             in.close();
-            Log.d("BIMAGE: ", "doInBackground: "+bimage.toString());
+            Log.d("BIMAGE", "doInBackground: "+bimage.toString());
         } catch (Exception e) {
             Log.e("Error Message", e.getMessage());
             e.printStackTrace();

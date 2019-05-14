@@ -25,7 +25,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class LoginActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/user/";
-    private static final String api_read_one = url + "read_one_name.php";
+    private static final String api_read_one = url + "read_one_name0.php";
     private static final String api_create = url + "create.php";
     private String username;
     private String read_username;
@@ -51,6 +51,11 @@ public class LoginActivity extends Activity {
                 connect();
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        //non fa niente perchè di si
     }
 
     /**
