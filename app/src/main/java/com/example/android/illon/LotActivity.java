@@ -98,6 +98,7 @@ public class LotActivity extends Activity {
         userButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                setContentView(R.layout.loading_layout);
                 launchUserActivity(u);
             }
         });
@@ -574,4 +575,7 @@ public class LotActivity extends Activity {
             imageUrls.add(p);
         }
     }
+
+    @Override
+    public void onBackPressed() {}
 }

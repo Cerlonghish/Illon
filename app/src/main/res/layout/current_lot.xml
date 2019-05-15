@@ -151,7 +151,8 @@
         android:digits="0123456789"
         android:inputType="phone"
         android:paddingLeft="10dp"
-        android:drawablePadding="10dp"/>
+        android:drawablePadding="10dp"
+        />
 
     <Button
         android:id="@+id/bidButton"
@@ -163,5 +164,6 @@
         android:layout_toEndOf="@+id/enterBid"
         android:background="@drawable/button_round"
         android:text="BID"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        />
 </RelativeLayout>

@@ -28,12 +28,11 @@ public class LoginActivity extends Activity {
     private static final String api_read_one = url + "read_one_name.php";
     private static final String api_create = url + "create.php";
     private String username;
-    private String read_username;
     private String create_username;
-    public boolean creation = false;
     private Pair <Integer, InputStream> create_response;
     private String[] s = new String[2];
-    private Pair<Integer, InputStream> read_response;
+    private Button button_login;
+    private EditText edit_username;
 
     /**
      * l'attributo l viene salvato se esiste
@@ -44,13 +43,15 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        Button button_login =  findViewById(R.id.button_login);
+        button_login =  findViewById(R.id.button_login);
+        edit_username = findViewById(R.id.username);
         if(getIntent().getStringExtra("Provenienza")==null) {
             DeleteCacheDir.deleteDir(getCacheDir());
         }
         button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("PULSANTE PREMUTO", "onClick: ");
                 connect();
             }
         });
@@ -62,59 +63,17 @@ public class LoginActivity extends Activity {
      * se la risposta http è 200, creo l'oggetto user parsando l'xml della risposta http, passo all'activity "LotActivity"
      */
     public void connect() {
-        Button button_login = findViewById(R.id.button_login);
-        button_login.setEnabled(false); //disabilito il bottone
+        Log.d("CONNESSIONE_LOGIN", "connect: "+edit_username.getText().toString());
+        setContentView(R.layout.loading_layout);
 
-        //prendo l'username dall'edit text
-        EditText edit_username = findViewById(R.id.username);
         username = edit_username.getText().toString();
-        read_username = api_read_one + "?user_name=" + username;
+        User user_login = UserFactory.getUser(username);
 
-        //prima connessione: verifica presenza username nel database
-        s[0] = read_username;
-        s[1] = "user/read_one_name.php";
-        Connection read_conn = new Connection();
-        read_response = null;
-        try{
-            read_response = read_conn.execute(s).get();
-        }catch (ExecutionException ex){
-            Log.d("LOGIN:Eccezione","Execution exception");
-        }catch (InterruptedException ex){
-            Log.d("LOGIN:Eccezione","Interrupted exception");
-        }
-
-        //controllo risposta lettura
-        if(read_response.first != 200){
+        if(user_login==null){
+            setContentView(R.layout.activity_login);
             userCreation();
-            button_login.setEnabled(true);
+            Log.d("FINE USERCREATION", "ciao");
         } else {
-            //lettura file da input stream
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = null;
-            try {
-                db = dbf.newDocumentBuilder();
-            } catch (ParserConfigurationException e) {
-                Log.d("LOGIN:Eccezione","ParserConfigurationException");
-            }
-            Document file_read;
-
-
-            User user_login = null;
-            try {
-                assert db != null;
-                file_read = db.parse(read_response.second);
-
-                user_login = parserXMLtoUser(file_read);
-
-            } catch (IOException ex) {
-                Log.d("LOGIN:Eccezione","IOException");
-            } catch (SAXException ex) {
-                Log.d("LOGIN:Eccezione","SAXException");
-            }
-
-            button_login.setEnabled(true);
-            read_conn.disconnect();
-            //lancio l'activity delle aste passandogli l'user
             launchLotActivity(user_login);
         }
     }
@@ -133,8 +92,7 @@ public class LoginActivity extends Activity {
                 "Yes",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        creation = true;
-                        // ***da aggiungere il token (Tene) ***
+                        setContentView(R.layout.loading_layout);
                         create_username = api_create + "?user_name=" + username;
                         s[0] = create_username;
                         s[1] = "user/create.php";
@@ -154,49 +112,18 @@ public class LoginActivity extends Activity {
                             Toast toast = Toast.makeText(LoginActivity.this, "User '" + username + "' has been created successfully ", Toast.LENGTH_SHORT);
                             toast.show();
 
-                            //ultima connessione per leggere i dati dell'utente dopo averli creati
-                            Connection read_conn = new Connection();
-                            s[0] = read_username;
-                            s[1] = "user/read_one_name.php";
-                            try{
-                                read_response = read_conn.execute(s).get();
-                            }catch (ExecutionException ex){
-                                Log.d("Eccezione","Execution exception");
-                            }catch (InterruptedException ex){
-                                Log.d("Eccezione","Interrupted exception");
+                            User user = UserFactory.getUser(username);
+                            if(user!=null) {
+                                launchLotActivity(user);
+                            } else {
+                                Toast.makeText(LoginActivity.this,"ERRORE",Toast.LENGTH_SHORT).show();
                             }
-
-                            if(read_response.first == 200) {
-
-                                //lettura file da input stream
-                                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                                DocumentBuilder db = null;
-                                try {
-                                    db = dbf.newDocumentBuilder();
-                                } catch (ParserConfigurationException e) {
-                                    e.printStackTrace();
-                                }
-                                Document file_read;
-
-                                User user_login=null;
-
-                                try {
-                                    assert db != null;
-                                    file_read = db.parse(read_response.second);
-
-                                    user_login = parserXMLtoUser(file_read);
-
-                                } catch (IOException ex) {
-                                    Log.d("LOGIN:Eccezione","IOException");
-                                } catch (SAXException ex) {
-                                    Log.d("LOGIN:Eccezione","IOException");
-                                }
-                                read_conn.disconnect();
-                                launchLotActivity(user_login);
-                            }
+                        } else {
+                            Toast toast = Toast.makeText(LoginActivity.this, "Errore nella creazione dell'utente", Toast.LENGTH_SHORT);
                         }
+                        setContentView(R.layout.activity_login);
                         create_conn.disconnect();
-
+                        dialog.dismiss();
                     }
                 });
         alertDialog.setButton(
@@ -204,33 +131,10 @@ public class LoginActivity extends Activity {
                 "No",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        creation = false;
+                        dialog.dismiss();
                     }
                 });
         alertDialog.show();
-    }
-
-    /**
-     *
-     * @param file xml (dato dall'inputstream della connessione http
-     * @return oggetto utente parsato
-     */
-    private User parserXMLtoUser(Document file){
-        Node user = file.getElementsByTagName("user").item(0);
-        Element eUser = (Element)user;
-        Node idTag = eUser.getElementsByTagName("user_id").item(0);
-        int user_id = Integer.parseInt(idTag.getTextContent());
-        Node nameTag =  eUser.getElementsByTagName("user_name").item(0);
-        String user_name = nameTag.getTextContent();
-        Node moneyTag = eUser.getElementsByTagName("user_money").item(0);
-        int user_money = Integer.parseInt(moneyTag.getTextContent());
-
-        if(file.getElementsByTagName("bid").getLength()>0) {
-            int bid = Integer.parseInt(file.getElementsByTagName("bid_value").item(0).getTextContent());
-            return new User(user_id, user_name, user_money, bid);
-        } else {
-            return new User(user_id, user_name, user_money);
-        }
     }
 
     /**

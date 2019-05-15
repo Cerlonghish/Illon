@@ -63,13 +63,14 @@
         android:layout_width="380dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/bidwon"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
-        android:dividerHeight="10sp"
-        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
         android:background="@color/cardview_light_background"
         android:divider="@color/cardview_light_background"
-        />
+        android:dividerHeight="10sp" />
 
 
     <android.support.design.widget.FloatingActionButton

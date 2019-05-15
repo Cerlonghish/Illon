@@ -66,6 +66,7 @@ public class UserActivity extends AppCompatActivity {
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                setContentView(R.layout.loading_layout);
                 launchLotActivity(u);
             }
         });
@@ -227,4 +228,7 @@ public class UserActivity extends AppCompatActivity {
         intent.putExtra("User", u);
         startActivity(intent);
     }
+
+    @Override
+    public void onBackPressed() {}
 }
