@@ -113,15 +113,12 @@ public class LotActivity extends Activity {
 
         retriveLot();
         if(current_lot==null || System.currentTimeMillis()-current_lot.getStart_time().getTime()>600000) {
-            Log.d("BO", "onCreate: SETLOT");
             DeleteCacheDir.deleteDir(getCacheDir());
             u=UserFactory.getUser(u.getName());
             current_lot = setLot();
         }
 
         setLotView(current_lot);
-        Log.d("IDLOTTO", "onCreate: "+current_lot.getId());
-        Log.d("IDUTENTE", "onCreate: "+u.getId());
     }
 
     /**
@@ -463,10 +460,22 @@ public class LotActivity extends Activity {
             } catch (SAXException ex) {
                 Log.d("LOT:Eccezione","SAXException");
             }
-        }else{
+        }else if (read_response.first==404){
             read_conn.disconnect();
-            Log.d("LOT: Errore","Lettura Lot attuale errata");
-            return null;
+            Toast.makeText(this,"Riprova più tardi per trovare nuove aste!",Toast.LENGTH_SHORT).show();
+            launchLoginActivity();
+        } else if (read_response.first==400){
+            read_conn.disconnect();
+            Toast.makeText(this,"Bad request",Toast.LENGTH_SHORT).show();
+            launchLoginActivity();
+        } else if(read_response.first==503) {
+            read_conn.disconnect();
+            Toast.makeText(this,"Resource not found",Toast.LENGTH_SHORT).show();
+            launchLoginActivity();
+        } else {
+            read_conn.disconnect();
+            Toast.makeText(this,"Resource not found",Toast.LENGTH_SHORT).show();
+            launchLoginActivity();
         }
         return null;
     }
@@ -574,6 +583,11 @@ public class LotActivity extends Activity {
             String p = e.getElementsByTagName("pic_path").item(0).getTextContent();
             imageUrls.add(p);
         }
+    }
+
+    public void launchLoginActivity() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
     }
 
     @Override

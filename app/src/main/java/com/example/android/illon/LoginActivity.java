@@ -25,7 +25,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class LoginActivity extends Activity {
     private static final String url = "http://164.132.47.236/illon/illon_api/user/";
-    private static final String api_read_one = url + "read_one_name.php";
     private static final String api_create = url + "create.php";
     private String username;
     private String create_username;
@@ -52,7 +51,12 @@ public class LoginActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Log.d("PULSANTE PREMUTO", "onClick: ");
-                connect();
+                if(isOnline()) {
+                    connect();
+                } else {
+                    Toast.makeText(LoginActivity.this,"Check your internet connection and retry",Toast.LENGTH_SHORT).show();
+                }
+                v.setOnClickListener(null);
             }
         });
     }
@@ -63,19 +67,37 @@ public class LoginActivity extends Activity {
      * se la risposta http è 200, creo l'oggetto user parsando l'xml della risposta http, passo all'activity "LotActivity"
      */
     public void connect() {
-        Log.d("CONNESSIONE_LOGIN", "connect: "+edit_username.getText().toString());
         setContentView(R.layout.loading_layout);
 
         username = edit_username.getText().toString();
-        User user_login = UserFactory.getUser(username);
+        if(!username.trim().equals("")){
+            User user_login = UserFactory.getUser(username);
 
-        if(user_login==null){
-            setContentView(R.layout.activity_login);
-            userCreation();
-            Log.d("FINE USERCREATION", "ciao");
+            if(user_login==null){
+                setContentView(R.layout.activity_login);
+                userCreation();
+            } else {
+                launchLotActivity(user_login);
+            }
         } else {
-            launchLotActivity(user_login);
+            setContentView(R.layout.activity_login);
+            button_login =  findViewById(R.id.button_login);
+            edit_username = findViewById(R.id.username);
+            button_login.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d("PULSANTE PREMUTO", "onClick: ");
+                    if(isOnline()) {
+                        connect();
+                    } else {
+                        Toast.makeText(LoginActivity.this,"Check your internet connection and retry",Toast.LENGTH_SHORT).show();
+                    }
+                    v.setOnClickListener(null);
+                }
+            });
+            Toast.makeText(this,"Type an username...",Toast.LENGTH_SHORT).show();
         }
+
     }
 
     /**
@@ -84,6 +106,20 @@ public class LoginActivity extends Activity {
      * quindi passo all'activity "LotActivity"
      */
     private void userCreation(){
+        button_login =  findViewById(R.id.button_login);
+        edit_username = findViewById(R.id.username);
+        button_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("PULSANTE PREMUTO", "onClick: ");
+                if(isOnline()) {
+                    connect();
+                } else {
+                    Toast.makeText(LoginActivity.this,"Check your internet connection and retry",Toast.LENGTH_SHORT).show();
+                }
+                v.setOnClickListener(null);
+            }
+        });
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle("");
         alertDialog.setMessage("Do you want to create the account?");
@@ -92,38 +128,42 @@ public class LoginActivity extends Activity {
                 "Yes",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        setContentView(R.layout.loading_layout);
-                        create_username = api_create + "?user_name=" + username;
-                        s[0] = create_username;
-                        s[1] = "user/create.php";
-                        //connessione per creare l'user nel database
-                        Connection create_conn = new Connection();
-                        create_response = null;
-                        try{
-                            create_response = create_conn.execute(s).get();
-                        }catch (ExecutionException ex){
-                            Log.d("LOGIN:Eccezione","create Execution exception");
-                        }catch (InterruptedException ex){
-                            Log.d("LOGIN:Eccezione","create Interrupted exception");
-                        }
-
-                        //creazione avvenuta con successo
-                        if (create_response.first == 201) {
-                            Toast toast = Toast.makeText(LoginActivity.this, "User '" + username + "' has been created successfully ", Toast.LENGTH_SHORT);
-                            toast.show();
-
-                            User user = UserFactory.getUser(username);
-                            if(user!=null) {
-                                launchLotActivity(user);
-                            } else {
-                                Toast.makeText(LoginActivity.this,"ERRORE",Toast.LENGTH_SHORT).show();
+                        if(isOnline()) {
+                            setContentView(R.layout.loading_layout);
+                            create_username = api_create + "?user_name=" + username;
+                            s[0] = create_username;
+                            s[1] = "user/create.php";
+                            //connessione per creare l'user nel database
+                            Connection create_conn = new Connection();
+                            create_response = null;
+                            try {
+                                create_response = create_conn.execute(s).get();
+                            } catch (ExecutionException ex) {
+                                Log.d("LOGIN:Eccezione", "create Execution exception");
+                            } catch (InterruptedException ex) {
+                                Log.d("LOGIN:Eccezione", "create Interrupted exception");
                             }
+
+                            //creazione avvenuta con successo
+                            if (create_response.first == 201) {
+                                Toast toast = Toast.makeText(LoginActivity.this, "User '" + username + "' has been created successfully ", Toast.LENGTH_SHORT);
+                                toast.show();
+
+                                User user = UserFactory.getUser(username);
+                                if (user != null) {
+                                    launchLotActivity(user);
+                                } else {
+                                    Toast.makeText(LoginActivity.this, "ERRORE", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast toast = Toast.makeText(LoginActivity.this, "Errore nella creazione dell'utente", Toast.LENGTH_SHORT);
+                            }
+                            setContentView(R.layout.activity_login);
+                            create_conn.disconnect();
+                            dialog.dismiss();
                         } else {
-                            Toast toast = Toast.makeText(LoginActivity.this, "Errore nella creazione dell'utente", Toast.LENGTH_SHORT);
+                            Toast.makeText(LoginActivity.this,"Check your internet connection and retry",Toast.LENGTH_SHORT).show();
                         }
-                        setContentView(R.layout.activity_login);
-                        create_conn.disconnect();
-                        dialog.dismiss();
                     }
                 });
         alertDialog.setButton(
@@ -142,10 +182,22 @@ public class LoginActivity extends Activity {
      * @param u utente che passo all'activity
      */
     public void launchLotActivity(User u) {
-        Log.d("LOGIN", "APRO LAYOUT DEL LOTTO");
         Intent intent = new Intent(this, LotActivity.class);
         intent.putExtra("User", u);
         startActivity(intent);
+    }
+
+    public boolean isOnline() {
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+            int     exitValue = ipProcess.waitFor();
+            return (exitValue == 0);
+        }
+        catch (IOException e)          { e.printStackTrace(); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        return false;
     }
 
     @Override
